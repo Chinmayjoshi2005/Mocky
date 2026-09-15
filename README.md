@@ -33,7 +33,7 @@ Mocky/
 ### 2. Configure Frontend
 
 ```bash
-cd frontend
+cd Frontend
 cp .env.example .env.local
 # Edit .env.local with your Supabase URL and anon key
 npm install
@@ -43,7 +43,7 @@ npm run dev
 ### 3. Configure Backend
 
 ```bash
-cd backend
+cd Backend
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 cp .env.example .env
@@ -67,29 +67,25 @@ uvicorn app.main:app --reload --port 8000
 3. **Redirect URLs**: Add `http://localhost:3000/auth/callback` to allowed redirect URLs
 4. **CORS**: Frontend URL should be in allowed origins (Settings > API > CORS)
 
-### Environment Variables Reference
+### Environment Variables
 
-#### Frontend (`.env.local`)
-```env
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
-```
+Environment files are intentionally not published in this README. Copy the
+placeholder templates locally, then fill them with values from your own
+Supabase project:
 
-#### Backend (`.env`)
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIs...
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIs...
-SUPABASE_JWT_SECRET=your-jwt-secret-from-supabase
-FRONTEND_URL=http://localhost:3000
-```
+- Frontend: `Frontend/.env.example` -> `Frontend/.env.local`
+- Backend: `Backend/.env.example` -> `Backend/.env`
+
+Never paste Supabase keys, JWT secrets, or Groq keys into Markdown files,
+screenshots, issues, or pull requests. The public frontend variables use the
+Supabase anon key; service-role keys and JWT secrets must remain backend-only.
 
 ## Development
 
 ### Frontend Commands
 
 ```bash
-cd frontend
+cd Frontend
 npm run dev        # Dev server with Turbopack
 npm run build      # Production build
 npm run start      # Production server
@@ -100,7 +96,7 @@ npm run typecheck  # TypeScript check
 ### Backend Commands
 
 ```bash
-cd backend
+cd Backend
 source .venv/bin/activate
 uvicorn app.main:app --reload --port 8000  # Dev server
 pytest                                      # Run tests
