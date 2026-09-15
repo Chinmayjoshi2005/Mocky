@@ -1,0 +1,53 @@
+# Environment variables - NEVER commit real secrets
+.env
+.env.local
+.env.production
+.env*.local
+.env*.production
+!.env.example
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+**/.venv/
+**/.venv
+**$/venv/
+**$/env/
+
+# Node.js / Dependencies
+**/node_modules/
+**/.pnp
+**/.pnp.*
+
+# Next.js
+**/Frontend/.next/
+**/Frontend/out/
+**/Frontend/.next-local/
+
+# Build output
+**/Frontend/build/
+**/Backend/build/
+**/Backend/dist/
+
+# Testing
+**/Frontend/coverage/
+**/Backend/coverage/
+**/Backend/.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+**/Thumbs.db
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

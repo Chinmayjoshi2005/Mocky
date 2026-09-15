@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --color-navy-50: hsl(220, 20%, 97%);
+  --color-navy-100: hsl(220, 18%, 93%);
+  --color-navy-200: hsl(220, 15%, 88%);
+  --color-navy-300: hsl(220, 12%, 78%);
+  --color-navy-400: hsl(220, 10%, 65%);
+  --color-navy-500: hsl(220, 9%, 50%);
+  --color-navy-600: hsl(220, 12%, 40%);
+  --color-navy-700: hsl(220, 15%, 30%);
+  --color-navy-800: hsl(222, 20%, 20%);
+  --color-navy-900: hsl(222, 47%, 11%);
+
+  --color-electric-blue: hsl(217, 91%, 60%);
+}
+
+@layer base {
+  * {
+    border-color: hsl(220, 13%, 91%);
+  }
+  body {
+    background-color: hsl(220, 20%, 97%);
+    color: hsl(222, 47%, 11%);
+    font-family: var(--font-sans);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  ::selection {
+    background: hsl(217, 91%, 60%, 0.2);
+    color: hsl(222, 47%, 11%);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-electric-blue);
+    outline-offset: 3px;
+  }
+}
+
+.dot-grid-shell {
+  --pointer-x: 50%;
+  --pointer-y: 20%;
+}
+
+.dot-grid-wash {
+  background-image:
+    radial-gradient(circle at 50% -10%, hsl(187, 86%, 62%, 0.18), transparent 35rem),
+    linear-gradient(180deg, hsl(209, 100%, 97%, 0.32), hsl(220, 20%, 97%, 0.94));
+}
+
+.dot-grid-glow {
+  background-image:
+    radial-gradient(circle at var(--pointer-x) var(--pointer-y), hsl(187, 86%, 62%, 0.28), transparent 20rem),
+    radial-gradient(circle, hsl(222, 47%, 11%, 0.3) 1.35px, transparent 1.8px);
+  background-size: auto, 21px 21px;
+  mask-image: linear-gradient(to bottom, black, transparent 88%);
+  opacity: 1;
+  transition: background-position 180ms ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in,
+  .animate-slide-up {
+    animation: none;
+  }
+
+  .dot-grid-glow {
+    transition: none;
+  }
+}
