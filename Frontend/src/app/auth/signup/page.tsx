@@ -15,7 +15,10 @@ import { Suspense } from "react";
 function SignUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+    ? requestedRedirect
+    : "/dashboard";
   const { signUp, loading, error, clearError } = useAuth();
 
   const [formData, setFormData] = useState<AuthFormData>({
@@ -54,7 +57,7 @@ function SignUpContent() {
     setFormData((prev) => ({ ...prev, [name]: value }));
     const error = validateField(name, value);
     setFieldErrors((prev) => ({ ...prev, [name]: error }));
-    if (error?.includes("form")) clearError();
+    clearError();
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {

@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
 import { createClient } from "@/lib/supabase/client";
+import { getBackendUrl } from "@/lib/api";
 
 interface InterviewSessionSummary {
   id: string;
@@ -35,7 +36,6 @@ export default function InterviewsListPage() {
   const [error, setError] = useState<string | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
     async function fetchInterviews() {
@@ -51,7 +51,7 @@ export default function InterviewsListPage() {
           return;
         }
 
-        const res = await fetch(`${backendUrl}/api/interviews`, {
+        const res = await fetch(`${getBackendUrl()}/api/interviews`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -73,11 +73,11 @@ export default function InterviewsListPage() {
     }
 
     fetchInterviews();
-  }, [backendUrl, supabase, router]);
+  }, [supabase, router]);
 
   return (
-    <div className="min-h-screen bg-navy-50 py-8 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-navy-50 py-6">
+      <div className="portrait-frame space-y-5">
         {/* Navigation Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-navy-200">
           <div className="flex items-center gap-3">

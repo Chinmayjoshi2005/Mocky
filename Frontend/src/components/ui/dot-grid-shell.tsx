@@ -33,9 +33,9 @@ export function DotGridShell({ children, className }: DotGridShellProps) {
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
     >
-      <div className="dot-grid-glow pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
-      <div className="dot-grid-wash pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
-      <div className="relative z-0">{children}</div>
+      <div className="dot-grid-wash pointer-events-none absolute inset-0 z-0" aria-hidden="true" />
+      <div className="dot-grid-glow pointer-events-none absolute inset-0 z-10" aria-hidden="true" />
+      <div className="relative z-20">{children}</div>
     </div>
   );
 }

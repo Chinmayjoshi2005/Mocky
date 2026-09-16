@@ -15,8 +15,12 @@ import { Suspense } from "react";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+    ? requestedRedirect
+    : "/dashboard";
   const verified = searchParams.get("verified") === "true";
+  const callbackError = searchParams.get("error");
   const { signIn, loading, error, clearError } = useAuth();
 
   const [formData, setFormData] = useState<AuthFormData>({
@@ -45,7 +49,7 @@ function LoginContent() {
     setFormData((prev) => ({ ...prev, [name]: value }));
     const error = validateField(name, value);
     setFieldErrors((prev) => ({ ...prev, [name]: error }));
-    if (error?.includes("form")) clearError();
+    clearError();
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
@@ -98,13 +102,13 @@ function LoginContent() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          {error && (
+          {(error || callbackError) && (
             <div
               className="animate-fade-in p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm"
               role="alert"
               aria-live="polite"
             >
-              {error.message}
+              {error?.message || callbackError}
             </div>
           )}
 

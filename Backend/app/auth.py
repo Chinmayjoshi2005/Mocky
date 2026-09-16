@@ -3,7 +3,8 @@ import logging
 from typing import Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
+import jwt
+from jwt import ExpiredSignatureError, PyJWK
 from pydantic import BaseModel
 from supabase import create_client, Client
 
@@ -103,8 +104,6 @@ async def get_current_user(
         )
 
     token = credentials.credentials
-    jwt_error_msg: Optional[str] = None
-
     # Method 1: Local cryptographic JWT verification (supports HS256 and ES256)
     try:
         header = jwt.get_unverified_header(token)
@@ -117,7 +116,7 @@ async def get_current_user(
 
         if alg == "HS256":
             if not settings.SUPABASE_JWT_SECRET:
-                raise JWTError("SUPABASE_JWT_SECRET not configured")
+                raise ValueError("SUPABASE_JWT_SECRET not configured")
             payload = jwt.decode(
                 token,
                 settings.SUPABASE_JWT_SECRET,
@@ -126,8 +125,6 @@ async def get_current_user(
                 options={"verify_aud": True, "verify_exp": True},
             )
         elif alg == "ES256":
-            from jose import jwk
-
             keys = get_jwks_keys(settings.SUPABASE_URL)
             key_data = keys.get(kid) if kid else None
             if not key_data and kid:
@@ -137,9 +134,9 @@ async def get_current_user(
                 key_data = next((k for k in keys.values() if k.get("alg") == "ES256"), None)
 
             if not key_data:
-                raise JWTError(f"No suitable JWKS key found for kid '{kid}'")
+                raise ValueError(f"No suitable JWKS key found for kid '{kid}'")
 
-            ec_key = jwk.construct(key_data, "ES256")
+            ec_key = PyJWK.from_dict(key_data).key
             payload = jwt.decode(
                 token,
                 ec_key,
@@ -148,17 +145,16 @@ async def get_current_user(
                 options={"verify_aud": True, "verify_exp": True},
             )
         else:
-            raise JWTError(f"Unsupported algorithm '{alg}'")
+            raise ValueError(f"Unsupported algorithm '{alg}'")
 
         token_iss = payload.get("iss")
-        if token_iss and token_iss.rstrip("/") != expected_iss:
-            if token_iss != "supabase" and "supabase" not in token_iss:
-                raise JWTError("Invalid issuer")
+        if token_iss is None or token_iss.rstrip("/") != expected_iss:
+            raise ValueError("Invalid issuer")
 
         token_data = TokenData(**payload)
         user_id = token_data.id
         if not user_id:
-            raise JWTError("Missing subject (user ID) in token")
+            raise ValueError("Missing subject (user ID) in token")
 
         now_ts = int(datetime.now(timezone.utc).timestamp())
         if token_data.exp and token_data.exp < now_ts:
@@ -183,8 +179,13 @@ async def get_current_user(
 
     except HTTPException:
         raise
+    except ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     except Exception as e:
-        jwt_error_msg = str(e)
         logger.debug(f"Local JWT verification failed: {e}")
 
     # Method 2: Supabase Auth API verification fallback (e.g. for asymmetric tokens or JWKS offline)
@@ -208,10 +209,9 @@ async def get_current_user(
         except Exception as e:
             logger.debug(f"Supabase auth API verification failed: {e}")
 
-    detail_msg = f"Invalid token: {jwt_error_msg}" if jwt_error_msg else "Invalid or expired token"
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail=detail_msg,
+        detail="Invalid or expired token",
         headers={"WWW-Authenticate": "Bearer"},
     )
 

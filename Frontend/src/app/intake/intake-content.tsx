@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/card";
 import { Logo } from "@/components/ui/logo";
 import { createClient } from "@/lib/supabase/client";
+import { getBackendUrl } from "@/lib/api";
 import { CandidateProfileView } from "@/components/intake/CandidateProfileView";
 import type {
   SeniorityLevel,
@@ -57,7 +58,6 @@ export function IntakeContent({ user }: IntakeContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
   // Navigation / step state
   const initialStepParam = searchParams.get("step");
@@ -277,7 +277,7 @@ export function IntakeContent({ user }: IntakeContentProps) {
         throw new Error("Authentication session expired. Please sign in again.");
       }
 
-      const response = await fetch(`${backendUrl}/api/resumes/${resumeRecord.id}/parse`, {
+      const response = await fetch(`${getBackendUrl()}/api/resumes/${resumeRecord.id}/parse`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -362,7 +362,7 @@ export function IntakeContent({ user }: IntakeContentProps) {
       }
 
       const response = await fetch(
-        `${backendUrl}/api/resumes/${resumeRecord.id}/analyze?reanalyze=${forceReanalyze}`,
+        `${getBackendUrl()}/api/resumes/${resumeRecord.id}/analyze?reanalyze=${forceReanalyze}`,
         {
           method: "POST",
           headers: {
@@ -446,7 +446,7 @@ export function IntakeContent({ user }: IntakeContentProps) {
         throw new Error("Authentication session expired. Please sign in again.");
       }
 
-      const res = await fetch(`${backendUrl}/api/interviews/generate`, {
+      const res = await fetch(`${getBackendUrl()}/api/interviews/generate`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -480,6 +480,8 @@ export function IntakeContent({ user }: IntakeContentProps) {
 
   // Upload Resume to Supabase Storage and create database record, then parse
   const handleUploadAndParseResume = async () => {
+    if (uploadingResume || parsingResume) return;
+
     if (!selectedFile) {
       // If user already has an existing parsed resume and didn't select a new one, proceed to step 2
       if (existingResume && existingResume.status === "parsed") {
@@ -594,6 +596,7 @@ export function IntakeContent({ user }: IntakeContentProps) {
   // Save Job Description to database
   const handleSaveJobDescription = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savingJob) return;
     setJobError(null);
 
     if (!validateJobForm()) {
@@ -754,7 +757,7 @@ export function IntakeContent({ user }: IntakeContentProps) {
   );
 
   return (
-    <div className="w-full max-w-3xl mx-auto py-8 px-4 sm:px-6 animate-slide-up">
+    <div className="portrait-frame py-6 animate-slide-up">
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 pb-6 border-b border-navy-200">
         <div>

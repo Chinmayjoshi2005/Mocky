@@ -34,6 +34,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Logo } from "@/components/ui/logo";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
+import { getBackendUrl } from "@/lib/api";
 
 interface InterviewQuestion {
   id: string;
@@ -102,7 +103,6 @@ export default function InterviewDetailPage() {
   const [isAddingSubmitting, setIsAddingSubmitting] = useState(false);
 
   const supabase = useMemo(() => createClient(), []);
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -123,7 +123,7 @@ export default function InterviewDetailPage() {
           return;
         }
 
-        const res = await fetch(`${backendUrl}/api/interviews/${interviewId}`, {
+        const res = await fetch(`${getBackendUrl()}/api/interviews/${interviewId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -164,7 +164,7 @@ export default function InterviewDetailPage() {
     return () => {
       ignore = true;
     };
-  }, [interviewId, backendUrl, supabase, router, refreshKey]);
+  }, [interviewId, supabase, router, refreshKey]);
 
   // Clear notifications after 4 seconds
   useEffect(() => {
@@ -209,7 +209,7 @@ export default function InterviewDetailPage() {
       const token = sessionData.session?.access_token;
       if (!token) throw new Error("Session expired. Please sign in again.");
 
-      const res = await fetch(`${backendUrl}/api/interviews/${interviewId}/questions/${qId}`, {
+      const res = await fetch(`${getBackendUrl()}/api/interviews/${interviewId}/questions/${qId}`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -241,7 +241,7 @@ export default function InterviewDetailPage() {
 
       await Promise.all(
         questions.map((q) =>
-          fetch(`${backendUrl}/api/interviews/${interviewId}/questions/${q.id}`, {
+          fetch(`${getBackendUrl()}/api/interviews/${interviewId}/questions/${q.id}`, {
             method: "PATCH",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -269,7 +269,7 @@ export default function InterviewDetailPage() {
       if (!token) throw new Error("Session expired. Please sign in again.");
 
       const res = await fetch(
-        `${backendUrl}/api/interviews/${interviewId}/questions/${qId}/regenerate`,
+        `${getBackendUrl()}/api/interviews/${interviewId}/questions/${qId}/regenerate`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -304,7 +304,7 @@ export default function InterviewDetailPage() {
       const token = sessionData.session?.access_token;
       if (!token) throw new Error("Session expired. Please sign in again.");
 
-      const res = await fetch(`${backendUrl}/api/interviews/${interviewId}/questions/${qId}`, {
+      const res = await fetch(`${getBackendUrl()}/api/interviews/${interviewId}/questions/${qId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -338,7 +338,7 @@ export default function InterviewDetailPage() {
       const token = sessionData.session?.access_token;
       if (!token) return;
 
-      await fetch(`${backendUrl}/api/interviews/${interviewId}/questions/reorder`, {
+      await fetch(`${getBackendUrl()}/api/interviews/${interviewId}/questions/reorder`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -376,7 +376,7 @@ export default function InterviewDetailPage() {
       if (!token) throw new Error("Session expired.");
 
       const res = await fetch(
-        `${backendUrl}/api/interviews/${interviewId}/questions/${editingQuestion.id}`,
+        `${getBackendUrl()}/api/interviews/${interviewId}/questions/${editingQuestion.id}`,
         {
           method: "PATCH",
           headers: {
@@ -413,7 +413,7 @@ export default function InterviewDetailPage() {
       const token = sessionData.session?.access_token;
       if (!token) throw new Error("Session expired.");
 
-      const res = await fetch(`${backendUrl}/api/interviews/${interviewId}/questions`, {
+      const res = await fetch(`${getBackendUrl()}/api/interviews/${interviewId}/questions`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -507,7 +507,7 @@ export default function InterviewDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-navy-50 py-12 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto space-y-6">
+        <div className="portrait-frame space-y-5">
           <div className="flex items-center justify-between pb-6 border-b border-navy-200">
             <Logo size="md" withText />
           </div>
@@ -526,7 +526,7 @@ export default function InterviewDetailPage() {
   if (error || !session) {
     return (
       <div className="min-h-screen bg-navy-50 py-12 px-4 sm:px-6">
-        <div className="max-w-xl mx-auto space-y-6">
+        <div className="portrait-frame space-y-5">
           <div className="flex items-center justify-between pb-6 border-b border-navy-200">
             <Logo size="md" withText />
           </div>
@@ -558,7 +558,7 @@ export default function InterviewDetailPage() {
 
   return (
     <div className="min-h-screen bg-navy-50 py-8 px-4 sm:px-6">
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="portrait-frame space-y-5">
         {/* Navigation Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-navy-200">
           <div className="flex items-center gap-3">

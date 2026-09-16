@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   LogOut,
+  Moon,
+  Sun,
   User,
   Mail,
   Shield,
@@ -40,6 +42,29 @@ export function DashboardContent({ user }: DashboardContentProps) {
   const { signOut, updatePassword, updateEmail, loading } = useAuth();
   const { user: liveUser } = useUser();
   const activeUser = liveUser || user;
+  const isDarkMode = useSyncExternalStore(
+    (onStoreChange) => {
+      window.addEventListener("storage", onStoreChange);
+      window.addEventListener("mocky-theme-change", onStoreChange);
+      return () => {
+        window.removeEventListener("storage", onStoreChange);
+        window.removeEventListener("mocky-theme-change", onStoreChange);
+      };
+    },
+    () => window.localStorage.getItem("mocky-theme") === "dark",
+    () => false
+  );
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDarkMode);
+  }, [isDarkMode]);
+
+  const toggleTheme = () => {
+    const nextIsDark = !isDarkMode;
+    window.localStorage.setItem("mocky-theme", nextIsDark ? "dark" : "light");
+    document.documentElement.classList.toggle("dark", nextIsDark);
+    window.dispatchEvent(new Event("mocky-theme-change"));
+  };
 
   // Password modal state
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
@@ -218,19 +243,37 @@ export function DashboardContent({ user }: DashboardContentProps) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 animate-slide-up">
-      <div className="mb-8 flex flex-col gap-5 border-2 border-navy-900 bg-blue-100/90 p-5 shadow-[7px_7px_0_rgba(15,23,42,0.92)] sm:flex-row sm:items-center sm:justify-between sm:p-6">
+    <div className="portrait-frame py-6 sm:py-8 animate-slide-up">
+      <div className="clay-header mb-8 flex flex-col gap-5 rounded-[26px] border border-white/80 bg-blue-100/70 p-5 shadow-[12px_12px_28px_rgba(136,148,174,0.34),-10px_-10px_24px_rgba(255,255,255,0.9)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
           <Logo size="lg" withText />
           <p className="mt-1 text-sm font-bold text-navy-700">Your private AI interview room</p>
         </div>
-        <Button variant="outline" onClick={handleSignOut} loading={loading} size="sm">
-          <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
-          Sign out
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleTheme}
+            title={isDarkMode ? "Switch to bright mode" : "Switch to dark mode"}
+            aria-label={isDarkMode ? "Switch to bright mode" : "Switch to dark mode"}
+            aria-pressed={isDarkMode}
+          >
+            {isDarkMode ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleSignOut}
+            loading={loading}
+            title="Sign out"
+            aria-label="Sign out"
+          >
+            <LogOut className="h-4 w-4" aria-hidden="true" />
+          </Button>
+        </div>
       </div>
 
-      <div className="grid gap-7 md:grid-cols-2">
+      <div className="grid gap-5 sm:grid-cols-2">
         {/* Account Details Card */}
         <Card className="bg-blue-50">
           <CardHeader>
@@ -300,7 +343,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
                   <Shield className="h-4 w-4 text-electric-blue" aria-hidden="true" />
                   <span className="text-sm font-medium text-navy-900">Active Sessions</span>
                 </div>
-                <span className="text-[11px] font-semibold text-navy-600 bg-navy-200/80 px-2 py-0.5 rounded">
+                <span className="text-[11px] font-semibold text-navy-600 bg-blue-50 px-2 py-0.5 rounded">
                   Coming Soon
                 </span>
               </div>
@@ -334,7 +377,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
             <div className="grid gap-4 sm:grid-cols-3">
               <Link
                 href="/intake?step=1"
-                className="group flex cursor-pointer flex-col justify-between rounded-none border-2 border-navy-900 bg-white p-4 shadow-[3px_3px_0_rgba(15,23,42,0.78)] transition-all hover:-translate-y-0.5 hover:border-electric-blue hover:bg-blue-50 hover:shadow-[5px_5px_0_rgba(15,23,42,0.78)]"
+                className="clay-tile clay-tile-blue group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-all hover:-translate-y-1 hover:border-white hover:bg-blue-100/70 hover:shadow-[10px_10px_20px_rgba(136,148,174,0.34),-7px_-7px_15px_rgba(255,255,255,0.95)]"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -360,7 +403,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
 
               <Link
                 href="/intake?step=2"
-                className="group flex cursor-pointer flex-col justify-between rounded-none border-2 border-navy-900 bg-white p-4 shadow-[3px_3px_0_rgba(15,23,42,0.78)] transition-all hover:-translate-y-0.5 hover:border-electric-blue hover:bg-emerald-50 hover:shadow-[5px_5px_0_rgba(15,23,42,0.78)]"
+                className="clay-tile clay-tile-mint group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-all hover:-translate-y-1 hover:border-white hover:bg-emerald-100/70 hover:shadow-[10px_10px_20px_rgba(136,148,174,0.34),-7px_-7px_15px_rgba(255,255,255,0.95)]"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -386,7 +429,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
 
               <Link
                 href="/intake"
-                className="group flex cursor-pointer flex-col justify-between rounded-none border-2 border-navy-900 bg-yellow-200 p-4 shadow-[3px_3px_0_rgba(15,23,42,0.78)] transition-all hover:-translate-y-0.5 hover:border-navy-900 hover:bg-yellow-300 hover:shadow-[5px_5px_0_rgba(15,23,42,0.78)]"
+                className="clay-tile clay-tile-amber group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-amber-100/80 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-all hover:-translate-y-1 hover:border-white hover:bg-amber-200/80 hover:shadow-[10px_10px_20px_rgba(136,148,174,0.34),-7px_-7px_15px_rgba(255,255,255,0.95)]"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">

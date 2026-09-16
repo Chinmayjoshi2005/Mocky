@@ -71,7 +71,6 @@ async def generate_interview(
     current_user: User = Depends(get_current_user),
 ):
     """Generate tailored interview questions matching candidate profile and target job description."""
-    db = get_supabase_admin_client()
     settings = get_settings()
 
     # 1. Resolve Resume and Candidate Profile
@@ -85,6 +84,9 @@ async def generate_interview(
                 detail="Invalid resume ID format. Expected a valid UUID.",
             )
 
+    db = get_supabase_admin_client()
+
+    if resume_id:
         resume_query = db.table("resumes").select("id, user_id, status").eq("id", resume_id).execute()
         if not resume_query.data:
             raise HTTPException(

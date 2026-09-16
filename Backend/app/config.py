@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "Mocky API"
     APP_VERSION: str = "0.1.0"
     ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     # CORS
     FRONTEND_URL: str = "http://localhost:3000"

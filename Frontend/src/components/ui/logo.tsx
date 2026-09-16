@@ -25,8 +25,8 @@ export function Logo({ size = "md", className, withText = false }: LogoProps) {
     <div className={cn("flex items-center gap-2", className)} aria-hidden="true">
       <div
         className={cn(
-          "flex items-center justify-center rounded-none bg-navy-900 text-white font-bold",
-          "shadow-[5px_5px_0_rgba(15,23,42,0.92)]",
+          "clay-logo flex items-center justify-center rounded-xl bg-navy-900 text-white font-bold",
+          "shadow-[7px_7px_14px_rgba(136,148,174,0.35),-4px_-4px_9px_rgba(255,255,255,0.9)]",
           sizeClasses[size]
         )}
         role="img"

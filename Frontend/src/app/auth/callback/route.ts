@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}${dest}`);
   }
 
-  const forwardUrl = next.startsWith("/") ? `${origin}${next}` : `${origin}/${next}`;
+  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
+  const forwardUrl = `${origin}${safeNext}`;
 
   if (code) {
     const response = NextResponse.redirect(forwardUrl);

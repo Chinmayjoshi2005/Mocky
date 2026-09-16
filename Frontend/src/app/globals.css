@@ -15,6 +15,8 @@
   --color-navy-900: hsl(222, 47%, 11%);
 
   --color-electric-blue: hsl(217, 91%, 60%);
+  --color-lilac-100: hsl(247, 62%, 94%);
+  --color-lilac-200: hsl(247, 62%, 89%);
 }
 
 @layer base {
@@ -22,7 +24,7 @@
     border-color: hsl(220, 13%, 91%);
   }
   body {
-    background-color: hsl(220, 20%, 97%);
+    background-color: hsl(224, 36%, 94%);
     color: hsl(222, 47%, 11%);
     font-family: var(--font-sans);
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -37,6 +39,207 @@
     outline: 2px solid var(--color-electric-blue);
     outline-offset: 3px;
   }
+
+  html {
+    scrollbar-width: none;
+  }
+
+  html::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+html.dark body {
+  background-color: hsl(228, 24%, 12%);
+  color: hsl(220, 24%, 92%);
+}
+
+html.dark .dot-grid-wash {
+  background-image:
+    radial-gradient(circle at 50% -10%, hsl(197, 78%, 58%, 0.06), transparent 32rem),
+    linear-gradient(180deg, hsl(228, 24%, 14%, 0.9), hsl(228, 24%, 12%, 0.98));
+}
+
+html.dark .dot-grid-glow {
+  background-image:
+    radial-gradient(circle at var(--pointer-x) var(--pointer-y), hsl(197, 78%, 58%, 0.08), transparent 18rem),
+    radial-gradient(circle, hsl(220, 25%, 78%, 0.13) 1.1px, transparent 1.75px);
+  opacity: 0.62;
+  mix-blend-mode: normal;
+}
+
+html.dark .clay-card,
+html.dark .clay-header {
+  background-color: hsl(228, 24%, 21%) !important;
+  border-color: hsl(225, 28%, 42%) !important;
+  box-shadow: 10px 10px 22px hsl(228, 30%, 6%, 0.34) !important;
+}
+
+html.dark .clay-header {
+  background-color: hsl(225, 48%, 29%) !important;
+  border-color: hsl(222, 55%, 52%) !important;
+}
+
+html.dark .clay-card.bg-blue-50 {
+  background-color: hsl(218, 54%, 30%) !important;
+  border-color: hsl(212, 62%, 54%) !important;
+}
+
+html.dark .clay-card.bg-emerald-50 {
+  background-color: hsl(161, 43%, 26%) !important;
+  border-color: hsl(158, 52%, 48%) !important;
+}
+
+html.dark .clay-card.bg-amber-50 {
+  background-color: hsl(277, 33%, 27%) !important;
+  border-color: hsl(284, 48%, 52%) !important;
+}
+
+html.dark .clay-card:hover {
+  box-shadow: 12px 12px 26px hsl(228, 30%, 6%, 0.4) !important;
+}
+
+html.dark .clay-button {
+  border-color: hsl(224, 18%, 32%) !important;
+  box-shadow: 5px 5px 12px hsl(228, 30%, 6%, 0.3) !important;
+}
+
+html.dark .clay-button:hover {
+  box-shadow: 7px 7px 15px hsl(228, 30%, 6%, 0.36) !important;
+}
+
+html.dark .clay-input {
+  background-color: hsl(228, 24%, 17%) !important;
+  border-color: hsl(224, 24%, 40%) !important;
+  box-shadow: inset 3px 3px 7px hsl(228, 30%, 7%, 0.34) !important;
+}
+
+html.dark .clay-logo {
+  box-shadow: 5px 5px 12px hsl(228, 30%, 6%, 0.35) !important;
+}
+
+html.dark .clay-tile {
+  border-color: hsl(224, 24%, 42%) !important;
+  box-shadow: 7px 7px 16px hsl(228, 30%, 6%, 0.3) !important;
+}
+
+html.dark .clay-tile-blue {
+  background-color: hsl(204, 58%, 29%) !important;
+  border-color: hsl(194, 72%, 54%) !important;
+}
+
+html.dark .clay-tile-mint {
+  background-color: hsl(174, 40%, 26%) !important;
+  border-color: hsl(164, 58%, 51%) !important;
+}
+
+html.dark .clay-tile-amber {
+  background-color: hsl(13, 47%, 29%) !important;
+  border-color: hsl(18, 70%, 58%) !important;
+}
+
+html.dark .clay-tile:hover {
+  box-shadow: 9px 9px 20px hsl(228, 30%, 6%, 0.38) !important;
+}
+
+html.dark .bg-white,
+html.dark .bg-white\/90,
+html.dark .bg-white\/75,
+html.dark .bg-white\/70,
+html.dark .bg-white\/65,
+html.dark .bg-white\/55,
+html.dark .bg-white\/45 {
+  background-color: hsl(228, 21%, 19%);
+}
+
+html.dark .bg-blue-50,
+html.dark .bg-blue-50\/40,
+html.dark .bg-blue-50\/60,
+html.dark .bg-blue-50\/70,
+html.dark .bg-blue-100\/70 {
+  background-color: hsl(204, 48%, 27%) !important;
+}
+
+html.dark .bg-emerald-50,
+html.dark .bg-emerald-50\/60,
+html.dark .bg-emerald-100\/70 {
+  background-color: hsl(174, 36%, 24%) !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-amber-50\/60,
+html.dark .bg-amber-100\/80,
+html.dark .bg-amber-200\/80,
+html.dark .bg-yellow-200,
+html.dark .bg-yellow-300 {
+  background-color: hsl(13, 42%, 27%) !important;
+}
+
+html.dark .text-blue-800,
+html.dark .text-blue-900,
+html.dark .text-emerald-700,
+html.dark .text-amber-700 {
+  color: hsl(198, 88%, 82%) !important;
+}
+
+html.dark .text-navy-300 {
+  color: hsl(220, 18%, 66%);
+}
+
+html.dark .bg-navy-900 {
+  background-color: hsl(222, 32%, 27%) !important;
+}
+
+html.dark .bg-navy-800 {
+  background-color: hsl(222, 30%, 31%) !important;
+}
+
+html.dark .border-blue-200,
+html.dark .border-blue-300,
+html.dark .border-emerald-200,
+html.dark .border-amber-200 {
+  border-color: hsl(199, 70%, 52%, 0.58) !important;
+}
+
+html.dark .text-white {
+  color: hsl(220, 24%, 96%);
+}
+
+html.dark .text-blue-100,
+html.dark .text-blue-200 {
+  color: hsl(198, 78%, 78%);
+}
+
+html.dark .text-electric-blue {
+  color: hsl(190, 94%, 72%);
+}
+
+html.dark .text-navy-900,
+html.dark .text-navy-800,
+html.dark .text-navy-700 {
+  color: hsl(220, 30%, 94%);
+}
+
+html.dark .text-navy-600,
+html.dark .text-navy-500,
+html.dark .text-navy-400 {
+  color: hsl(220, 16%, 72%);
+}
+
+html.dark .border-navy-200,
+html.dark .border-navy-100,
+html.dark .border-white\/80 {
+  border-color: hsl(224, 18%, 31%);
+}
+
+html.dark .border-white\/80 {
+  border-color: hsl(224, 18%, 30%);
+}
+
+html.dark .bg-navy-50,
+html.dark .bg-navy-50\/60,
+html.dark .bg-navy-100 {
+  background-color: hsl(229, 20%, 23%);
 }
 
 .dot-grid-shell {
@@ -44,19 +247,31 @@
   --pointer-y: 20%;
 }
 
+.clay-surface {
+  background: hsl(220, 42%, 98%, 0.72);
+  border: 1px solid hsl(0, 0%, 100%, 0.8);
+  box-shadow: 12px 12px 28px hsl(220, 18%, 62%, 0.32), -10px -10px 24px hsl(0, 0%, 100%, 0.9);
+}
+
+.portrait-frame {
+  width: min(calc(100% - 2rem), 700px);
+  margin-inline: auto;
+}
+
 .dot-grid-wash {
   background-image:
-    radial-gradient(circle at 50% -10%, hsl(187, 86%, 62%, 0.18), transparent 35rem),
-    linear-gradient(180deg, hsl(209, 100%, 97%, 0.32), hsl(220, 20%, 97%, 0.94));
+    radial-gradient(circle at 50% -10%, hsl(189, 82%, 78%, 0.22), transparent 35rem),
+    linear-gradient(180deg, hsl(220, 42%, 98%, 0.5), hsl(224, 36%, 94%, 0.96));
 }
 
 .dot-grid-glow {
   background-image:
-    radial-gradient(circle at var(--pointer-x) var(--pointer-y), hsl(187, 86%, 62%, 0.28), transparent 20rem),
-    radial-gradient(circle, hsl(222, 47%, 11%, 0.3) 1.35px, transparent 1.8px);
-  background-size: auto, 21px 21px;
-  mask-image: linear-gradient(to bottom, black, transparent 88%);
-  opacity: 1;
+    radial-gradient(circle at var(--pointer-x) var(--pointer-y), hsl(189, 82%, 78%, 0.32), transparent 20rem),
+    radial-gradient(circle, hsl(226, 30%, 45%, 0.24) 1.25px, transparent 1.85px);
+  background-size: auto, 22px 22px;
+  mask-image: linear-gradient(to bottom, black 0%, black 72%, transparent 100%);
+  mix-blend-mode: multiply;
+  opacity: 0.72;
   transition: background-position 180ms ease-out;
 }
 

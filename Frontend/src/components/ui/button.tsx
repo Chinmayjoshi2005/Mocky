@@ -4,15 +4,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none border-2 border-navy-900 text-sm font-bold shadow-[4px_4px_0_rgba(15,23,42,0.92)] transition-all duration-200 hover:-translate-y-px hover:shadow-[6px_6px_0_rgba(15,23,42,0.92)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+  "clay-button inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/80 text-sm font-bold shadow-[6px_6px_14px_rgba(136,148,174,0.32),-4px_-4px_10px_rgba(255,255,255,0.9)] transition-all duration-200 hover:-translate-y-px hover:shadow-[8px_8px_16px_rgba(136,148,174,0.38),-5px_-5px_12px_rgba(255,255,255,0.95)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-electric-blue focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none active:translate-y-0 active:shadow-[inset_3px_3px_7px_rgba(136,148,174,0.28)]",
   {
     variants: {
       variant: {
-        default: "bg-navy-900 text-white hover:bg-electric-blue hover:text-navy-900",
-        destructive: "border-red-600 bg-red-500 text-white hover:bg-red-600",
-        outline: "border-navy-900 bg-white hover:border-electric-blue hover:bg-blue-100 hover:text-navy-900",
-        secondary: "border-blue-300 bg-blue-100 text-navy-900 hover:border-electric-blue hover:bg-blue-200",
-        ghost: "border-transparent shadow-none hover:bg-navy-100 hover:text-navy-900 hover:shadow-sm",
+        default: "border-transparent bg-electric-blue text-navy-900 hover:bg-cyan-300",
+        destructive: "border-transparent bg-rose-400 text-white hover:bg-rose-500",
+        outline: "border-white/80 bg-white/65 hover:border-white hover:bg-blue-100/80 hover:text-navy-900",
+        secondary: "border-white/80 bg-lilac-100 text-navy-900 hover:bg-lilac-200",
+        ghost: "border-transparent bg-transparent shadow-none hover:bg-white/50 hover:text-navy-900 hover:shadow-sm",
         link: "text-electric-blue underline-offset-4 hover:underline",
       },
       size: {

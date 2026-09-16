@@ -12,7 +12,10 @@ import { Suspense } from "react";
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
-  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+    ? requestedRedirect
+    : "/dashboard";
 
   const { resendVerificationEmail, loading, error, clearError } = useAuth();
   const [resendStatus, setResendStatus] = useState<string | null>(null);

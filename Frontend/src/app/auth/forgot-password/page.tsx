@@ -14,11 +14,14 @@ import { Suspense } from "react";
 function ForgotPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") ?? "/dashboard";
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+    ? requestedRedirect
+    : "/dashboard";
   const sent = searchParams.get("sent") === "true";
   const { resetPassword, loading, error, clearError } = useAuth();
 
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [fieldError, setFieldError] = useState("");
 
   const validateEmail = (value: string) => {
@@ -50,7 +53,7 @@ function ForgotPasswordContent() {
     const result = await resetPassword(email);
 
     if (result.success) {
-      router.push(`/auth/forgot-password?sent=true&redirect=${encodeURIComponent(redirectTo)}`);
+      router.push(`/auth/forgot-password?sent=true&email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectTo)}`);
     }
   };
 
@@ -70,7 +73,7 @@ function ForgotPasswordContent() {
           <p className="text-sm text-navy-500 text-center">
             Didn&apos;t receive the email? Check your spam folder or{" "}
             <button
-              onClick={() => router.push(`/auth/forgot-password?redirect=${encodeURIComponent(redirectTo)}`)}
+              onClick={() => router.push(`/auth/forgot-password?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectTo)}`)}
               className="text-electric-blue hover:underline font-medium"
             >
               try again

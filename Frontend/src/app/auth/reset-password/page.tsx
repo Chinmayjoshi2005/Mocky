@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2, CheckCircle, AlertTriangle, ArrowLeft } from "lucide-react";
@@ -16,7 +16,7 @@ function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { updatePassword, loading, error, clearError } = useAuth();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [checkingSession, setCheckingSession] = useState(true);
   const [hasValidSession, setHasValidSession] = useState(false);
@@ -29,6 +29,8 @@ function ResetPasswordContent() {
 
   useEffect(() => {
     let isMounted = true;
+    let subscription: { unsubscribe: () => void } | null = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
     async function checkRecoverySession() {
       // 1. Check if Supabase client already has an active session (e.g. from callback redirect)
@@ -55,7 +57,7 @@ function ResetPasswordContent() {
       }
 
       // 3. Listen for auth state changes (e.g. Supabase processing hash fragment recovery tokens on client)
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((event, currentSession) => {
         if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && currentSession)) {
           if (isMounted) {
             setHasValidSession(true);
@@ -63,24 +65,22 @@ function ResetPasswordContent() {
           }
         }
       });
+      subscription = sub;
 
       // 4. Fallback timeout: if after 1.5s no valid session/recovery state is detected, show expired state
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         if (isMounted) {
           setCheckingSession(false);
         }
       }, 1500);
-
-      return () => {
-        subscription.unsubscribe();
-        clearTimeout(timer);
-      };
     }
 
     checkRecoverySession();
 
     return () => {
       isMounted = false;
+      if (subscription) subscription.unsubscribe();
+      if (timer) clearTimeout(timer);
     };
   }, [searchParams, supabase]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { AuthFormData, AuthResult, AuthState } from "@/types/auth";
 
@@ -10,7 +10,7 @@ export function useAuth() {
     error: null,
   });
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const clearError = useCallback(() => {
     setState((prev) => ({ ...prev, error: null }));

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { createClient } from "@/lib/supabase/client";
+import { apiFetch } from "@/lib/api";
 
 interface PracticeQuestion {
   id: string;
@@ -74,8 +74,6 @@ export default function PracticePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const interviewId = params?.id;
-  const supabase = useMemo(() => createClient(), []);
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   const [session, setSession] = useState<PracticeSession | null>(null);
   const [completion, setCompletion] = useState<CompletionResult | null>(null);
@@ -85,29 +83,17 @@ export default function PracticePage() {
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const request = useCallback(async (path: string, options: RequestInit = {}) => {
-    const { data } = await supabase.auth.getSession();
-    const token = data.session?.access_token;
-    if (!token) {
-      router.push(`/auth/login?returnUrl=/interview/${interviewId}/practice`);
-      throw new Error("Your session has expired. Please sign in again.");
+  const request = useCallback(async (path: string, options: RequestInit = {}): Promise<unknown> => {
+    try {
+      return await apiFetch(path, options);
+    } catch (err) {
+      // Preserve the original return-URL redirect behaviour for the practice flow.
+      if (err instanceof Error && err.message.includes("session has expired")) {
+        router.push(`/auth/login?returnUrl=/interview/${interviewId}/practice`);
+      }
+      throw err;
     }
-
-    const response = await fetch(`${backendUrl}${path}`, {
-      ...options,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
-    });
-
-    if (!response.ok) {
-      const body = await response.json().catch(() => null);
-      throw new Error(body?.detail || "Something went wrong. Please try again.");
-    }
-    return response.json();
-  }, [backendUrl, interviewId, router, supabase]);
+  }, [interviewId, router]);
 
   useEffect(() => {
     if (!interviewId) return;
@@ -191,7 +177,7 @@ export default function PracticePage() {
   if (error && !session) {
     return (
       <main className="min-h-screen bg-navy-50 px-4 py-10 sm:px-6">
-        <div className="mx-auto max-w-2xl">
+        <div className="portrait-frame">
           <Link href={`/interview/${interviewId}`} className="mb-8 inline-flex items-center gap-2 text-sm font-semibold text-navy-600 hover:text-electric-blue">
             <ArrowLeft className="h-4 w-4" /> Back to interview
           </Link>
@@ -221,7 +207,7 @@ export default function PracticePage() {
 
   return (
     <main className="min-h-screen bg-navy-50 px-4 py-6 sm:px-6 sm:py-10">
-      <div className="mx-auto max-w-4xl space-y-6">
+      <div className="portrait-frame space-y-5">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <Link href={`/interview/${interviewId}`} className="inline-flex items-center gap-2 text-sm font-semibold text-navy-600 hover:text-electric-blue">
             <ArrowLeft className="h-4 w-4" /> Exit practice
@@ -259,7 +245,7 @@ export default function PracticePage() {
 }
 
 function LoadingState({ label }: { label: string }) {
-  return <main className="flex min-h-screen items-center justify-center bg-navy-50 px-6"><div className="flex items-center gap-3 text-sm font-semibold text-navy-600"><Loader2 className="h-5 w-5 animate-spin text-electric-blue" />{label}</div></main>;
+  return <main className="flex min-h-screen items-center justify-center bg-navy-50 px-6"><div className="portrait-frame flex items-center justify-center gap-3 text-sm font-semibold text-navy-600"><Loader2 className="h-5 w-5 animate-spin text-electric-blue" />{label}</div></main>;
 }
 
 function FeedbackCard({ answer }: { answer: PracticeAnswer }) {
@@ -272,5 +258,5 @@ function FeedbackBlock({ title, icon, text }: { title: string; icon: React.React
 
 function CompletionView({ completion, interviewId }: { completion: CompletionResult; interviewId: string }) {
   const score = completion.overall_score;
-  return <main className="min-h-screen bg-navy-50 px-4 py-10 sm:px-6"><div className="mx-auto max-w-3xl space-y-6"><Link href={`/interview/${interviewId}`} className="inline-flex items-center gap-2 text-sm font-semibold text-navy-600 hover:text-electric-blue"><ArrowLeft className="h-4 w-4" /> Back to interview</Link><Card className="overflow-hidden"><div className="bg-navy-900 p-8 text-center text-white sm:p-12"><Trophy className="mx-auto mb-4 h-12 w-12 text-amber-300" /><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-200">Practice complete</p><h1 className="mt-2 text-3xl font-bold">Your results are ready</h1><div className="mt-6 text-6xl font-bold text-blue-200">{score !== null && score !== undefined ? Math.round(score) : "-"}<span className="text-2xl">/100</span></div><p className="mt-2 text-sm text-blue-100">Overall score across {completion.answered_questions} of {completion.total_questions} answered questions</p></div><CardContent className="space-y-4 p-6 sm:p-8"><h2 className="text-lg font-bold text-navy-900">Review your feedback</h2>{completion.answers.map((answer, index) => <div key={answer.id} className="rounded-lg border border-navy-200 p-4"><div className="flex items-start justify-between gap-4"><p className="text-sm font-semibold text-navy-900">{index + 1}. {answer.question_text}</p>{answer.score !== null && answer.score !== undefined && <span className="shrink-0 text-sm font-bold text-electric-blue">{answer.score}/100</span>}</div><p className="mt-2 text-sm leading-6 text-navy-600">{answer.improvements || "No improvement notes were returned."}</p></div>)}<Link href={`/interview/${interviewId}`} className="inline-flex w-full"><Button className="w-full">Back to interview <ArrowRight className="h-4 w-4" /></Button></Link></CardContent></Card></div></main>;
+  return <main className="min-h-screen bg-navy-50 py-8"><div className="portrait-frame space-y-5"><Link href={`/interview/${interviewId}`} className="inline-flex items-center gap-2 text-sm font-semibold text-navy-600 hover:text-electric-blue"><ArrowLeft className="h-4 w-4" /> Back to interview</Link><Card className="overflow-hidden"><div className="bg-navy-900 p-8 text-center text-white sm:p-12"><Trophy className="mx-auto mb-4 h-12 w-12 text-amber-300" /><p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-200">Practice complete</p><h1 className="mt-2 text-3xl font-bold">Your results are ready</h1><div className="mt-6 text-6xl font-bold text-blue-200">{score !== null && score !== undefined ? Math.round(score) : "-"}<span className="text-2xl">/100</span></div><p className="mt-2 text-sm text-blue-100">Overall score across {completion.answered_questions} of {completion.total_questions} answered questions</p></div><CardContent className="space-y-4 p-6 sm:p-8"><h2 className="text-lg font-bold text-navy-900">Review your feedback</h2>{completion.answers.map((answer, index) => <div key={answer.id} className="rounded-lg border border-navy-200 p-4"><div className="flex items-start justify-between gap-4"><p className="text-sm font-semibold text-navy-900">{index + 1}. {answer.question_text}</p>{answer.score !== null && answer.score !== undefined && <span className="shrink-0 text-sm font-bold text-electric-blue">{answer.score}/100</span>}</div><p className="mt-2 text-sm leading-6 text-navy-600">{answer.improvements || "No improvement notes were returned."}</p></div>)}<Link href={`/interview/${interviewId}`} className="inline-flex w-full"><Button className="w-full">Back to interview <ArrowRight className="h-4 w-4" /></Button></Link></CardContent></Card></div></main>;
 }

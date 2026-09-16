@@ -27,7 +27,7 @@ export default function PrivacyPage() {
       </header>
 
       <main className="flex-1 py-10 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl">
+        <div className="portrait-frame">
           <Card className="shadow-xs">
             <CardHeader className="border-b border-navy-100 pb-6">
               <CardTitle className="text-2xl font-bold text-navy-900">Privacy Policy</CardTitle>
