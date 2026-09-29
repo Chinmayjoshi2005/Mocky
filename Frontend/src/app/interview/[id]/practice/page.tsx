@@ -16,10 +16,17 @@ import {
   Send,
   Sparkles,
   Trophy,
+  Mic,
+  MicOff,
+  Play,
+  Square,
+  Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiUpload } from "@/lib/api";
+import { useSpeech } from "@/hooks/useSpeech";
+import { useRecorder } from "@/hooks/useRecorder";
 
 interface PracticeQuestion {
   id: string;
@@ -70,6 +77,12 @@ interface CompletionResult {
   completed_at?: string | null;
 }
 
+interface TranscriptionResponse {
+  text: string;
+  filename: string;
+  size_bytes: number;
+}
+
 export default function PracticePage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -82,6 +95,18 @@ export default function PracticePage() {
   const [submitting, setSubmitting] = useState(false);
   const [completing, setCompleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { speak, stop: stopSpeaking, speaking, supported: ttsSupported } = useSpeech();
+  const {
+    start: startRecording,
+    stop: stopRecording,
+    cancel: cancelRecording,
+    state: recorderState,
+    error: recorderError,
+    elapsedMs,
+    isRecording,
+  } = useRecorder();
+  const [transcribing, setTranscribing] = useState(false);
 
   const request = useCallback(async (path: string, options: RequestInit = {}): Promise<unknown> => {
     try {
@@ -170,6 +195,53 @@ export default function PracticePage() {
     }
   };
 
+  // Speak the current question whenever it changes.
+  useEffect(() => {
+    if (!currentQuestion || !ttsSupported) return;
+    speak(currentQuestion.question_text);
+    // Stop speaking when the question changes or the component unmounts.
+    return () => stopSpeaking();
+  }, [currentQuestion?.id, ttsSupported, speak, stopSpeaking]);
+
+  const handleRecordToggle = async () => {
+    if (isRecording) {
+      try {
+        const blob = await stopRecording();
+        await uploadAndTranscribe(blob);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not stop recording.");
+      }
+    } else {
+      // Stop TTS first so it doesn't bleed into the mic.
+      stopSpeaking();
+      await startRecording();
+    }
+  };
+
+  const uploadAndTranscribe = async (blob: Blob) => {
+    setTranscribing(true);
+    setError(null);
+    try {
+      const ext = blob.type.includes("mp4") ? "mp4" : "webm";
+      const form = new FormData();
+      form.append("audio", blob, `answer.${ext}`);
+
+      const result = (await apiUpload("/api/practice/transcribe", form)) as TranscriptionResponse;
+
+      if (!result.text) {
+        setError("No speech detected. Please try again and speak clearly.");
+        return;
+      }
+
+      // Pre-fill the textarea so the candidate can review/edit before submitting.
+      setAnswerText((prev) => (prev ? `${prev}\n${result.text}` : result.text));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not transcribe the recording.");
+    } finally {
+      setTranscribing(false);
+    }
+  };
+
   if (loading) {
     return <LoadingState label="Preparing your practice session..." />;
   }
@@ -229,14 +301,93 @@ export default function PracticePage() {
 
         {error && <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700"><CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />{error}</div>}
 
+        {recorderError && (
+          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            <MicOff className="mt-0.5 h-4 w-4 shrink-0" />
+            {recorderError}
+          </div>
+        )}
+
         {lastAnswer && !finished && !hasAnsweredCurrentQuestion && <FeedbackCard answer={lastAnswer} />}
 
         {finished ? (
-          <Card><CardContent className="flex flex-col items-center gap-4 p-8 text-center sm:p-12"><CheckCircle2 className="h-12 w-12 text-emerald-600" /><h2 className="text-2xl font-bold text-navy-900">You answered every question</h2><p className="max-w-md text-sm text-navy-600">Complete the session to calculate your overall score and view your final feedback.</p><Button onClick={completeSession} loading={completing}>Finish practice <ArrowRight className="h-4 w-4" /></Button></CardContent></Card>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-4 p-8 text-center sm:p-12">
+              <CheckCircle2 className="h-12 w-12 text-emerald-600" />
+              <h2 className="text-2xl font-bold text-navy-900">You answered every question</h2>
+              <p className="max-w-md text-sm text-navy-600">Complete the session to calculate your overall score and view your final feedback.</p>
+              <Button onClick={completeSession} loading={completing}>Finish practice <ArrowRight className="h-4 w-4" /></Button>
+            </CardContent>
+          </Card>
         ) : (
           <Card>
-            <CardHeader className="border-b border-navy-100"><div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy-500"><span className="rounded-full bg-blue-50 px-2.5 py-1 text-electric-blue">Question {currentIndex + 1}</span><span>{currentQuestion.category.replaceAll("_", " ")}</span><span>•</span><span>{currentQuestion.difficulty}</span></div><CardTitle className="pt-2 text-xl leading-snug sm:text-2xl">{currentQuestion.question_text}</CardTitle><p className="text-sm text-navy-500">Assessing: <strong className="text-navy-700">{currentQuestion.competency}</strong></p></CardHeader>
-            <CardContent className="p-6 sm:p-8"><form onSubmit={submitAnswer} className="space-y-4"><label htmlFor="answer" className="flex items-center gap-2 text-sm font-bold text-navy-900"><MessageSquareText className="h-4 w-4 text-electric-blue" /> Your answer</label><textarea id="answer" value={answerText} onChange={(event) => setAnswerText(event.target.value)} placeholder="Structure your response with specific examples, decisions, and outcomes..." minLength={10} rows={8} disabled={submitting} className="w-full resize-y rounded-lg border border-navy-200 bg-white p-4 text-sm leading-6 text-navy-900 outline-none transition focus:border-electric-blue focus:ring-2 focus:ring-blue-100 disabled:bg-navy-50" /><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center"><p className="text-xs text-navy-500">Minimum 10 characters. Aim for a clear, specific response.</p><Button type="submit" disabled={answerText.trim().length < 10} loading={submitting}>Submit answer <Send className="h-4 w-4" /></Button></div></form></CardContent>
+            <CardHeader className="border-b border-navy-100">
+              <div className="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-navy-500">
+                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-electric-blue">Question {currentIndex + 1}</span>
+                <span>{currentQuestion.category.replaceAll("_", " ")}</span>
+                <span>•</span>
+                <span>{currentQuestion.difficulty}</span>
+              </div>
+              <CardTitle className="pt-2 text-xl leading-snug sm:text-2xl">{currentQuestion.question_text}</CardTitle>
+              {ttsSupported && (
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => (speaking ? stopSpeaking() : speak(currentQuestion.question_text))}
+                  >
+                    {speaking ? <Square className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+                    {speaking ? "Stop" : "Listen"}
+                  </Button>
+                </div>
+              )}
+              <p className="text-sm text-navy-500">Assessing: <strong className="text-navy-700">{currentQuestion.competency}</strong></p>
+            </CardHeader>
+            <CardContent className="p-6 sm:p-8">
+              <form onSubmit={submitAnswer} className="space-y-4">
+                <label htmlFor="answer" className="flex items-center gap-2 text-sm font-bold text-navy-900">
+                  <MessageSquareText className="h-4 w-4 text-electric-blue" /> Your answer
+                </label>
+                <textarea
+                  id="answer"
+                  value={answerText}
+                  onChange={(event) => setAnswerText(event.target.value)}
+                  placeholder="Structure your response with specific examples, decisions, and outcomes..."
+                  minLength={10}
+                  rows={8}
+                  disabled={submitting}
+                  className="w-full resize-y rounded-lg border border-navy-200 bg-white p-4 text-sm leading-6 text-navy-900 outline-none transition focus:border-electric-blue focus:ring-2 focus:ring-blue-100 disabled:bg-navy-50"
+                />
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <p className="text-xs text-navy-500">
+                    Minimum 10 characters. Type your answer, or record it with the mic.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant={isRecording ? "destructive" : "outline"}
+                      onClick={handleRecordToggle}
+                      disabled={submitting || transcribing}
+                      loading={transcribing}
+                    >
+                      {isRecording ? (
+                        <>
+                          <MicOff className="h-4 w-4" /> Stop ({(elapsedMs / 1000).toFixed(1)}s)
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="h-4 w-4" /> Record
+                        </>
+                      )}
+                    </Button>
+                    <Button type="submit" disabled={answerText.trim().length < 10 || isRecording} loading={submitting}>
+                      Submit answer <Send className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </CardContent>
           </Card>
         )}
       </div>

@@ -50,3 +50,35 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
   const text = await response.text();
   return text ? JSON.parse(text) : null;
 }
+
+/**
+ * Multipart variant of `apiFetch` for file uploads (e.g. audio recordings).
+ *
+ * Do NOT pass `Content-Type` manually — the browser sets it with the correct
+ * multipart boundary. This is why we can't reuse `apiFetch` for uploads.
+ */
+export async function apiUpload(path: string, formData: FormData): Promise<unknown> {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+
+  if (!token) {
+    throw new Error("Your session has expired. Please sign in again.");
+  }
+
+  const response = await fetch(`${getBackendUrl()}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      // NOTE: intentionally no Content-Type — browser sets multipart boundary.
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.detail || "Something went wrong. Please try again.");
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
+}

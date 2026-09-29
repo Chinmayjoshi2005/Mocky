@@ -431,6 +431,21 @@ export function IntakeContent({ user }: IntakeContentProps) {
 
   // Feature 2A: Trigger personalised interview question generation via Groq
   const triggerGenerateQuestions = async () => {
+    if (!existingResume?.id) {
+      setGenerationError("Please upload and prepare a resume before generating questions.");
+      return;
+    }
+
+    if (!existingJob?.id) {
+      setGenerationError("Please save the target job details before generating questions.");
+      return;
+    }
+
+    if (existingAnalysis?.status !== "ready") {
+      setGenerationError("Candidate profile analysis is not ready yet. Please analyze the resume first.");
+      return;
+    }
+
     setGeneratingQuestions(true);
     setGenerationError(null);
     setGenerationPhase(1);
@@ -641,6 +656,10 @@ export function IntakeContent({ user }: IntakeContentProps) {
   };
 
   const isResumeReady = existingResume && existingResume.status === "parsed";
+  const isAnalysisReady = existingAnalysis?.status === "ready";
+  const canGenerateQuestions = Boolean(
+    existingResume?.status === "parsed" && existingJob && isAnalysisReady && !generatingQuestions
+  );
 
   // Render Stepper Header
   const renderStepper = () => (
@@ -1565,14 +1584,32 @@ export function IntakeContent({ user }: IntakeContentProps) {
                       <Sparkles className="h-5 w-5 text-electric-blue" />
                       <span>Feature 2A: Personalised Question Generation</span>
                     </div>
-                    <span className="text-xs font-semibold text-electric-blue bg-white border border-blue-200 px-2.5 py-1 rounded-full self-start sm:self-auto">
-                      Ready to Generate
+                    <span
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-full self-start sm:self-auto border ${
+                        isAnalysisReady
+                          ? "text-electric-blue bg-white border-blue-200"
+                          : "text-amber-700 bg-amber-50 border-amber-200"
+                      }`}
+                    >
+                      {isAnalysisReady ? "Ready to Generate" : "Awaiting Resume Analysis"}
                     </span>
                   </div>
 
                   <p className="text-xs sm:text-sm text-navy-600 leading-relaxed">
                     Mocky will analyze your verified profile alongside this target role to synthesize grounded, seniority-calibrated interview questions covering technical depth, system design, and behavioral competencies.
                   </p>
+
+                  {!isAnalysisReady && !generationError && (
+                    <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2 animate-fade-in">
+                      <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold">Resume profile not ready</p>
+                        <p className="mt-0.5">
+                          Run the resume analysis before generating interview questions.
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Generation Error Alert */}
                   {generationError && (
@@ -1616,7 +1653,8 @@ export function IntakeContent({ user }: IntakeContentProps) {
                     <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <Button
                         onClick={triggerGenerateQuestions}
-                        className="w-full sm:w-auto bg-electric-blue hover:bg-blue-600 text-white shadow-md font-semibold"
+                        disabled={!canGenerateQuestions}
+                        className="w-full sm:w-auto bg-electric-blue hover:bg-blue-600 text-white shadow-md font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <Sparkles className="h-4 w-4 mr-2" />
                         Generate Tailored Questions

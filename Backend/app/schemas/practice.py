@@ -112,3 +112,17 @@ class CompletePracticeResponse(BaseModel):
     answered_questions: int
     answers: list[PracticeAnswerResponse] = []
     completed_at: Optional[str] = None
+
+# ---------------------------------------------------------------------------
+# Voice / audio schemas
+# ---------------------------------------------------------------------------
+
+class TranscriptionResponse(BaseModel):
+    """API response for a successful audio transcription."""
+
+    text: str = Field(
+        ...,
+        description="Transcribed text of the candidate's spoken answer. May be empty if no speech was detected.",
+    )
+    filename: str = Field(..., description="Original filename of the uploaded audio.")
+    size_bytes: int = Field(..., description="Size of the uploaded audio in bytes.")

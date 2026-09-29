@@ -2,12 +2,13 @@ import json
 import logging
 from typing import Any
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from supabase import create_client, Client
 
 from app.auth import get_current_user, User
 from app.config import get_settings
 from app.evaluator import evaluate_answer, AnswerEvaluationError
+from app.transcriber import transcribe_audio, TranscriptionError
 from app.schemas.practice import (
     StartPracticeRequest,
     SubmitAnswerRequest,
@@ -15,6 +16,7 @@ from app.schemas.practice import (
     PracticeAnswerResponse,
     PracticeQuestionItem,
     CompletePracticeResponse,
+    TranscriptionResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -496,3 +498,32 @@ async def list_practice_answers(
         .execute()
     )
     return [_map_answer_response(a) for a in (answers_res.data or [])]
+
+@router.post("/transcribe", response_model=TranscriptionResponse)
+async def transcribe_answer_audio(
+    audio: UploadFile = File(..., description="Recorded audio of the candidate's answer."),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Transcribe a recorded answer using Groq Whisper.
+
+    This endpoint is deliberately stateless: it does NOT touch the practice
+    session. The frontend uploads the recording, gets back a transcript,
+    lets the candidate review/edit it, and then submits it through the
+    existing POST /api/practice/{session_id}/answers endpoint.
+    """
+    settings = get_settings()
+
+    file_bytes = await audio.read()
+    filename = audio.filename or "answer.webm"
+
+    try:
+        transcript = await transcribe_audio(
+            file_bytes=file_bytes,
+            filename=filename,
+            settings=settings,
+        )
+    except TranscriptionError as err:
+        raise HTTPException(status_code=err.status_code, detail=err.message)
+
+    return TranscriptionResponse(text=transcript, filename=filename, size_bytes=len(file_bytes))
