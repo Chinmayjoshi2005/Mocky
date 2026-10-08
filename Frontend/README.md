@@ -1,6 +1,6 @@
 # Mocky Frontend
 
-Next.js 15 + TypeScript + Tailwind CSS + shadcn/ui frontend for Mocky - AI-powered mock technical interview platform.
+Next.js 16 + React 19 + TypeScript + Tailwind CSS 4 frontend for Mocky, an AI-powered mock technical interview platform.
 
 ## Quick Start
 
@@ -30,7 +30,8 @@ src/
 │   │   ├── login/         # Login page
 │   │   ├── forgot-password/ # Password reset request
 │   │   └── callback/      # Email verification callback
-│   ├── dashboard/         # Protected dashboard (placeholder)
+│   ├── dashboard/         # Protected account and interview dashboard
+│   ├── progress/          # Practice history, progress, and personal goals
 │   ├── layout.tsx         # Root layout
 │   ├── page.tsx           # Home page (redirects based on auth)
 │   └── globals.css        # Global styles + design tokens
@@ -61,7 +62,10 @@ src/
 - **Sign Up** - Email/password with client-side validation, password strength requirements
 - **Log In** - Email/password with remember me, password visibility toggle
 - **Forgot Password** - Email-based password reset flow
-- **Protected Dashboard** - Placeholder with user info, sign out
+- **Protected Dashboard** - Account management and interview intake
+- **Interview Preparation** - Resume/JD intake, personalised questions, and text practice with AI feedback
+- **Voice Answer Input** - Record spoken answers and transcribe them for evaluation
+- **Progress** - Practice history, score summaries, and improvement goals
 - **Route Protection** - Middleware redirects unauthenticated users
 - **Session Persistence** - Supabase SSR cookies
 - **Accessibility** - Labels, focus states, ARIA attributes, keyboard navigation
@@ -81,5 +85,5 @@ npm run dev        # Start development server
 npm run build      # Build for production
 npm run start      # Start production server
 npm run lint       # Run ESLint
-npm run typecheck  # Run TypeScript compiler check
+npx tsc --noEmit   # TypeScript compiler check
 ```

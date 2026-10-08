@@ -22,6 +22,7 @@ import {
   PlayCircle,
   ArrowRight,
   Sparkles,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -458,14 +459,22 @@ export function DashboardContent({ user }: DashboardContentProps) {
             </div>
             <div className="pt-4 border-t border-navy-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-navy-500">
               <p>
-                Phase 2A intake foundation is active. AI question generation and live interview room follow in Phase 2B.
+                Resume intake, tailored questions, text and voice-to-text practice are ready.
               </p>
-              <Link href="/intake" className="sm:hidden">
-                <Button size="sm" className="w-full">
-                  <Sparkles className="h-4 w-4 mr-1.5" />
-                  Start Intake
-                </Button>
-              </Link>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link href="/progress">
+                  <Button variant="outline" size="sm" className="w-full">
+                    <Target className="h-4 w-4" aria-hidden="true" />
+                    Progress &amp; Goals
+                  </Button>
+                </Link>
+                <Link href="/intake" className="sm:hidden">
+                  <Button size="sm" className="w-full">
+                    <Sparkles className="h-4 w-4 mr-1.5" />
+                    Start Intake
+                  </Button>
+                </Link>
+              </div>
             </div>
           </CardContent>
         </Card>

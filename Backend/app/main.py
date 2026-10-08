@@ -9,6 +9,7 @@ from app.auth import get_current_user, User
 from app.resumes import router as resumes_router
 from app.interviews import router as interviews_router
 from app.practice import router as practice_router
+from app.progress import router as progress_router
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ app.add_middleware(
 app.include_router(resumes_router)
 app.include_router(interviews_router)
 app.include_router(practice_router)
+app.include_router(progress_router)
 
 
 @app.get("/health", tags=["health"])

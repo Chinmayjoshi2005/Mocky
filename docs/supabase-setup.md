@@ -54,15 +54,18 @@ Go to **Authentication > Email Templates** to customize:
 - Magic link
 - Invite user
 
+## Apply Database Migrations
+
+Apply all SQL files in `supabase/migrations/` in timestamp order using the
+Supabase CLI or SQL editor. Existing projects must also apply
+`20261008160000_feature5_progress_goals.sql` before using practice progress
+and improvement goals.
+
 ## Row Level Security (RLS)
 
-For future features, enable RLS on tables:
-```sql
-ALTER TABLE your_table ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own data" ON your_table
-  FOR SELECT USING (auth.uid() = user_id);
-```
+The checked-in migrations enable RLS and add per-user ownership policies for
+application tables and resume storage. Review the policies after each schema
+change; do not disable RLS or expose the service-role key to the frontend.
 
 ## Local Development with Supabase CLI (Optional)
 
