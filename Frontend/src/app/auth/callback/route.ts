@@ -27,69 +27,93 @@ export async function GET(request: NextRequest) {
   if (code) {
     const response = NextResponse.redirect(forwardUrl);
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
+    try {
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                response.cookies.set(name, value, options)
+              );
+            },
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
-            );
-          },
-        },
+        }
+      );
+
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+      if (!exchangeError) {
+        return response;
       }
-    );
 
-    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-    if (!exchangeError) {
-      return response;
+      console.error("Auth callback code exchange error:", exchangeError.message);
+      const isPaused = exchangeError.message?.toLowerCase().includes("failed to fetch");
+      const errText = isPaused
+        ? "Auth service unreachable (project paused). Please resume in Supabase dashboard."
+        : "Reset link has expired or is invalid. Please request a new one.";
+      const dest = next.includes("reset-password")
+        ? `/auth/forgot-password?error=${encodeURIComponent(errText)}`
+        : `/auth/login?error=${encodeURIComponent(isPaused ? errText : exchangeError.message)}`;
+      return NextResponse.redirect(`${origin}${dest}`);
+    } catch (err: unknown) {
+      console.error("Auth callback code exchange uncaught:", err);
+      const dest = next.includes("reset-password")
+        ? `/auth/forgot-password?error=${encodeURIComponent("Authentication service unreachable. Your Supabase project is paused or offline.")}`
+        : `/auth/login?error=${encodeURIComponent("Authentication service unreachable. Your Supabase project is paused or offline.")}`;
+      return NextResponse.redirect(`${origin}${dest}`);
     }
-
-    console.error("Auth callback code exchange error:", exchangeError.message);
-    const dest = next.includes("reset-password")
-      ? `/auth/forgot-password?error=${encodeURIComponent("Reset link has expired or is invalid. Please request a new one.")}`
-      : `/auth/login?error=${encodeURIComponent(exchangeError.message)}`;
-    return NextResponse.redirect(`${origin}${dest}`);
   }
 
   if (token_hash && type) {
     const response = NextResponse.redirect(forwardUrl);
 
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll();
+    try {
+      const supabase = createServerClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return request.cookies.getAll();
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                response.cookies.set(name, value, options)
+              );
+            },
           },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              response.cookies.set(name, value, options)
-            );
-          },
-        },
+        }
+      );
+
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        type,
+        token_hash,
+      });
+
+      if (!verifyError) {
+        return response;
       }
-    );
 
-    const { error: verifyError } = await supabase.auth.verifyOtp({
-      type,
-      token_hash,
-    });
-
-    if (!verifyError) {
-      return response;
+      console.error("Auth callback OTP verification error:", verifyError.message);
+      const isPaused = verifyError.message?.toLowerCase().includes("failed to fetch");
+      const errText = isPaused
+        ? "Auth service unreachable (project paused). Please resume in Supabase dashboard."
+        : "Verification link has expired or is invalid. Please request a new one.";
+      const dest = next.includes("reset-password")
+        ? `/auth/forgot-password?error=${encodeURIComponent(errText)}`
+        : `/auth/login?error=${encodeURIComponent(isPaused ? errText : verifyError.message)}`;
+      return NextResponse.redirect(`${origin}${dest}`);
+    } catch (err: unknown) {
+      console.error("Auth callback OTP verification uncaught:", err);
+      const dest = next.includes("reset-password")
+        ? `/auth/forgot-password?error=${encodeURIComponent("Authentication service unreachable. Your Supabase project is paused or offline.")}`
+        : `/auth/login?error=${encodeURIComponent("Authentication service unreachable. Your Supabase project is paused or offline.")}`;
+      return NextResponse.redirect(`${origin}${dest}`);
     }
-
-    console.error("Auth callback OTP verification error:", verifyError.message);
-    const dest = next.includes("reset-password")
-      ? `/auth/forgot-password?error=${encodeURIComponent("Verification link has expired or is invalid. Please request a new one.")}`
-      : `/auth/login?error=${encodeURIComponent(verifyError.message)}`;
-    return NextResponse.redirect(`${origin}${dest}`);
   }
 
   // If no code or token_hash was provided (e.g. hash fragments were used or direct access)

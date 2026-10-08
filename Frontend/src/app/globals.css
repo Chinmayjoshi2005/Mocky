@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   --color-navy-50: hsl(220, 20%, 97%);
   --color-navy-100: hsl(220, 18%, 93%);
@@ -95,9 +95,6 @@ html.dark .clay-card.bg-amber-50 {
   border-color: hsl(284, 48%, 52%) !important;
 }
 
-html.dark .clay-card:hover {
-  box-shadow: 12px 12px 26px hsl(228, 30%, 6%, 0.4) !important;
-}
 
 html.dark .clay-button {
   border-color: hsl(224, 18%, 32%) !important;
@@ -138,9 +135,6 @@ html.dark .clay-tile-amber {
   border-color: hsl(18, 70%, 58%) !important;
 }
 
-html.dark .clay-tile:hover {
-  box-shadow: 9px 9px 20px hsl(228, 30%, 6%, 0.38) !important;
-}
 
 html.dark .bg-white,
 html.dark .bg-white\/90,

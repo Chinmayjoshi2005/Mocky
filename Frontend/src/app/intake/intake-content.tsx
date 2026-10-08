@@ -1010,7 +1010,7 @@ export function IntakeContent({ user }: IntakeContentProps) {
                                 ? ` • ~${existingResume.word_count} words extracted`
                                 : ""}
                               {" • Uploaded on "}
-                              {new Date(existingResume.created_at).toLocaleDateString()}
+                              {new Date(existingResume.created_at).toLocaleDateString("en-US")}
                             </p>
                           </div>
                         </div>

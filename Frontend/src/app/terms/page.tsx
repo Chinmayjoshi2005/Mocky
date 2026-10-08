@@ -17,11 +17,11 @@ export default function TermsPage() {
             <Logo size="md" withText />
           </Link>
           <Link
-            href="/auth/login"
+            href="/"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium text-navy-600 hover:text-navy-900 hover:bg-navy-50 transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to Sign In
+            Back
           </Link>
         </div>
       </header>

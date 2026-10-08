@@ -14,15 +14,28 @@ import { Suspense } from "react";
 function ForgotPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const requestedRedirect = searchParams.get("redirect");
-  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
-    ? requestedRedirect
-    : "/dashboard";
+  const requestedRedirect =
+    searchParams.get("redirect") ||
+    searchParams.get("returnUrl") ||
+    searchParams.get("next");
+  const isInternal = Boolean(requestedRedirect && requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//"));
+  const isAuthRoute = Boolean(
+    requestedRedirect &&
+    (requestedRedirect.startsWith("/auth/login") ||
+      requestedRedirect.startsWith("/auth/signup") ||
+      requestedRedirect === "/login" ||
+      requestedRedirect === "/signup" ||
+      requestedRedirect === "/register")
+  );
+  const redirectTo = isInternal && !isAuthRoute && requestedRedirect ? requestedRedirect : "/dashboard";
+
   const sent = searchParams.get("sent") === "true";
+  const callbackError = searchParams.get("error");
   const { resetPassword, loading, error, clearError } = useAuth();
 
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const [fieldError, setFieldError] = useState("");
+  const [isSent, setIsSent] = useState(sent);
 
   const validateEmail = (value: string) => {
     if (!value) return "Email is required";
@@ -53,11 +66,12 @@ function ForgotPasswordContent() {
     const result = await resetPassword(email);
 
     if (result.success) {
+      setIsSent(true);
       router.push(`/auth/forgot-password?sent=true&email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectTo)}`);
     }
   };
 
-  if (sent) {
+  if (sent || isSent) {
     return (
       <Card className="animate-slide-up">
         <CardHeader className="text-center pb-4">
@@ -73,7 +87,10 @@ function ForgotPasswordContent() {
           <p className="text-sm text-navy-500 text-center">
             Didn&apos;t receive the email? Check your spam folder or{" "}
             <button
-              onClick={() => router.push(`/auth/forgot-password?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectTo)}`)}
+              onClick={() => {
+                setIsSent(false);
+                router.push(`/auth/forgot-password?email=${encodeURIComponent(email)}&redirect=${encodeURIComponent(redirectTo)}`);
+              }}
               className="text-electric-blue hover:underline font-medium"
             >
               try again
@@ -102,13 +119,13 @@ function ForgotPasswordContent() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          {error && (
+          {(error || callbackError) && (
             <div
-              className="animate-fade-in p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm"
+              className="animate-fade-in p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm space-y-2"
               role="alert"
               aria-live="polite"
             >
-              {error.message}
+              <div>{error?.message || callbackError}</div>
             </div>
           )}
 
@@ -127,7 +144,7 @@ function ForgotPasswordContent() {
           />
 
           <Button type="submit" className="w-full" size="lg" loading={loading}>
-            {loading ? <Loader2 className="h-4 w-4" /> : "Send reset link"}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Send reset link"}
           </Button>
         </form>
       </CardContent>

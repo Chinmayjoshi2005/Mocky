@@ -15,11 +15,28 @@ import { Suspense } from "react";
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const requestedRedirect =
+    searchParams.get("redirect") ||
+    searchParams.get("returnUrl") ||
+    searchParams.get("next");
+  const isInternal = Boolean(requestedRedirect && requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//"));
+  const isAuthRoute = Boolean(
+    requestedRedirect &&
+    (requestedRedirect.startsWith("/auth/login") ||
+      requestedRedirect.startsWith("/auth/signup") ||
+      requestedRedirect.startsWith("/auth/reset-password") ||
+      requestedRedirect === "/login" ||
+      requestedRedirect === "/signup" ||
+      requestedRedirect === "/register")
+  );
+  const redirectTo = isInternal && !isAuthRoute && requestedRedirect ? requestedRedirect : "/dashboard";
+
   const { updatePassword, loading, error, clearError } = useAuth();
   const supabase = useMemo(() => createClient(), []);
 
   const [checkingSession, setCheckingSession] = useState(true);
   const [hasValidSession, setHasValidSession] = useState(false);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -33,46 +50,68 @@ function ResetPasswordContent() {
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     async function checkRecoverySession() {
-      // 1. Check if Supabase client already has an active session (e.g. from callback redirect)
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        if (isMounted) {
-          setHasValidSession(true);
-          setCheckingSession(false);
+      try {
+        // 1. Check if Supabase client already has an active session
+        const { data: { session }, error: sessionErr } = await supabase.auth.getSession();
+        if (sessionErr) {
+          throw sessionErr;
         }
-        return;
-      }
-
-      // 2. Check if a PKCE code was passed directly in query params
-      const code = searchParams.get("code");
-      if (code) {
-        const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
-        if (!codeError && data.session) {
+        if (session) {
           if (isMounted) {
             setHasValidSession(true);
             setCheckingSession(false);
           }
           return;
         }
-      }
 
-      // 3. Listen for auth state changes (e.g. Supabase processing hash fragment recovery tokens on client)
-      const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((event, currentSession) => {
-        if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && currentSession)) {
-          if (isMounted) {
-            setHasValidSession(true);
-            setCheckingSession(false);
+        // 2. Check if a PKCE code was passed directly in query params
+        const code = searchParams.get("code");
+        if (code) {
+          const { data, error: codeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (codeError) {
+            throw codeError;
+          }
+          if (data?.session) {
+            if (isMounted) {
+              setHasValidSession(true);
+              setCheckingSession(false);
+            }
+            return;
           }
         }
-      });
-      subscription = sub;
 
-      // 4. Fallback timeout: if after 1.5s no valid session/recovery state is detected, show expired state
-      timer = setTimeout(() => {
+        // 3. Listen for auth state changes (hash fragment recovery tokens)
+        const { data: { subscription: sub } } = supabase.auth.onAuthStateChange((event, currentSession) => {
+          if (event === "PASSWORD_RECOVERY" || (event === "SIGNED_IN" && currentSession)) {
+            if (isMounted) {
+              setHasValidSession(true);
+              setCheckingSession(false);
+            }
+          }
+        });
+        subscription = sub;
+
+        // 4. Fallback timeout: if after 1.5s no valid session is detected, show expired state
+        timer = setTimeout(() => {
+          if (isMounted) {
+            setCheckingSession(false);
+          }
+        }, 1500);
+      } catch (err: unknown) {
+        console.warn("Recovery session check error:", err);
+        const msg = err instanceof Error ? err.message : String(err);
+        const lower = msg.toLowerCase();
+        const friendlyMsg =
+          lower.includes("failed to fetch") ||
+          lower.includes("authretryablefetcherror") ||
+          lower.includes("networkerror")
+            ? "Cannot connect to authentication service. Your Supabase project is paused or unreachable. Please visit your Supabase dashboard to unpause/resume your project."
+            : msg;
         if (isMounted) {
+          setSessionError(friendlyMsg);
           setCheckingSession(false);
         }
-      }, 1500);
+      }
     }
 
     checkRecoverySession();
@@ -138,7 +177,7 @@ function ResetPasswordContent() {
     if (result.success) {
       setIsSuccess(true);
       setTimeout(() => {
-        router.push("/dashboard");
+        router.push(redirectTo);
         router.refresh();
       }, 2000);
     }
@@ -156,6 +195,40 @@ function ResetPasswordContent() {
             Please wait while we authenticate your password reset session.
           </CardDescription>
         </CardHeader>
+      </Card>
+    );
+  }
+
+  if (sessionError) {
+    return (
+      <Card className="animate-slide-up">
+        <CardHeader className="text-center pb-4">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
+            <AlertTriangle className="h-8 w-8" aria-hidden="true" />
+          </div>
+          <CardTitle className="text-2xl font-semibold text-navy-900">Service Unreachable</CardTitle>
+          <CardDescription className="text-navy-600 max-w-sm mx-auto">
+            {sessionError}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Button
+            onClick={() => window.location.reload()}
+            className="w-full"
+            size="lg"
+          >
+            Retry Connection
+          </Button>
+        </CardContent>
+        <CardFooter className="flex flex-col items-center gap-3 pt-2">
+          <Link
+            href="/auth/login"
+            className="text-sm text-navy-600 hover:text-navy-900 inline-flex items-center gap-1.5 font-medium transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to sign in
+          </Link>
+        </CardFooter>
       </Card>
     );
   }
@@ -208,11 +281,11 @@ function ResetPasswordContent() {
         </CardHeader>
         <CardFooter className="flex flex-col items-center gap-3 pt-2">
           <Button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push(redirectTo)}
             className="w-full"
             size="lg"
           >
-            Go to Dashboard
+            Continue
           </Button>
         </CardFooter>
       </Card>

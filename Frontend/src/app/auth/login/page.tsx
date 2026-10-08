@@ -15,13 +15,25 @@ import { Suspense } from "react";
 function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const requestedRedirect = searchParams.get("redirect");
-  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
-    ? requestedRedirect
-    : "/dashboard";
+  const requestedRedirect =
+    searchParams.get("redirect") ||
+    searchParams.get("returnUrl") ||
+    searchParams.get("next");
+
+  const isInternal = Boolean(requestedRedirect && requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//"));
+  const isAuthRoute = Boolean(
+    requestedRedirect &&
+    (requestedRedirect.startsWith("/auth/login") ||
+      requestedRedirect.startsWith("/auth/signup") ||
+      requestedRedirect === "/login" ||
+      requestedRedirect === "/signup" ||
+      requestedRedirect === "/register")
+  );
+  const redirectTo = isInternal && !isAuthRoute && requestedRedirect ? requestedRedirect : "/dashboard";
+
   const verified = searchParams.get("verified") === "true";
   const callbackError = searchParams.get("error");
-  const { signIn, loading, error, clearError } = useAuth();
+  const { signIn, resendVerificationEmail, loading, error, clearError } = useAuth();
 
   const [formData, setFormData] = useState<AuthFormData>({
     email: "",
@@ -29,46 +41,61 @@ function LoginContent() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Partial<AuthFormData>>({});
+  const [resendStatus, setResendStatus] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   const validateField = (name: string, value: string) => {
-    let error = "";
+    let err = "";
     switch (name) {
       case "email":
-        if (!value) error = "Email is required";
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Enter a valid email address";
+        if (!value) err = "Email is required";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) err = "Enter a valid email address";
         break;
       case "password":
-        if (!value) error = "Password is required";
+        if (!value) err = "Password is required";
         break;
     }
-    return error;
+    return err;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    const error = validateField(name, value);
-    setFieldErrors((prev) => ({ ...prev, [name]: error }));
+    const err = validateField(name, value);
+    setFieldErrors((prev) => ({ ...prev, [name]: err }));
     clearError();
+    setResendStatus(null);
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const error = validateField(name, value);
-    setFieldErrors((prev) => ({ ...prev, [name]: error }));
+    const err = validateField(name, value);
+    setFieldErrors((prev) => ({ ...prev, [name]: err }));
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!formData.email) return;
+    setIsResending(true);
+    setResendStatus(null);
+    const result = await resendVerificationEmail(formData.email);
+    setIsResending(false);
+    if (result.success) {
+      setResendStatus("Verification email sent! Check your inbox.");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
+    setResendStatus(null);
 
     let hasErrors = false;
     const newFieldErrors: Partial<AuthFormData> = {};
 
     (Object.keys(formData) as Array<keyof AuthFormData>).forEach((key) => {
-      const error = validateField(key, formData[key] as string);
-      if (error) {
-        newFieldErrors[key] = error;
+      const err = validateField(key, formData[key] as string);
+      if (err) {
+        newFieldErrors[key] = err;
         hasErrors = true;
       }
     });
@@ -104,11 +131,38 @@ function LoginContent() {
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {(error || callbackError) && (
             <div
-              className="animate-fade-in p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm"
+              className="animate-fade-in p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm space-y-2"
               role="alert"
               aria-live="polite"
             >
-              {error?.message || callbackError}
+              <div>{error?.message || callbackError}</div>
+              {error?.message?.toLowerCase().includes("email not confirmed") && (
+                <div className="pt-1 border-t border-red-200 flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isResending || !formData.email}
+                    onClick={handleResendConfirmation}
+                    className="h-8 text-xs bg-white text-navy-800 hover:bg-red-50"
+                  >
+                    {isResending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                    Resend verification email
+                  </Button>
+                  {!formData.email && (
+                    <span className="text-xs text-red-600">Enter your email above to resend</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {resendStatus && (
+            <div
+              className="animate-fade-in p-3 rounded-md bg-green-50 border border-green-200 text-green-700 text-sm"
+              role="status"
+            >
+              {resendStatus}
             </div>
           )}
 
@@ -151,7 +205,7 @@ function LoginContent() {
 
           <div className="flex items-center justify-end">
             <Link
-              href="/auth/forgot-password"
+              href={`/auth/forgot-password?redirect=${encodeURIComponent(redirectTo)}`}
               className="text-sm text-electric-blue hover:underline"
             >
               Forgot password?
@@ -159,14 +213,14 @@ function LoginContent() {
           </div>
 
           <Button type="submit" className="w-full" size="lg" loading={loading}>
-            {loading ? <Loader2 className="h-4 w-4" /> : "Sign in"}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Sign in"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex flex-col items-center gap-3 pt-4">
         <p className="text-sm text-navy-500">
           Don&apos;t have an account?{" "}
-          <Link href={`/auth/signup?redirect=${encodeURIComponent(redirectTo ?? "/dashboard")}`} className="text-electric-blue hover:underline font-medium">
+          <Link href={`/auth/signup?redirect=${encodeURIComponent(redirectTo)}`} className="text-electric-blue hover:underline font-medium">
             Create one
           </Link>
         </p>

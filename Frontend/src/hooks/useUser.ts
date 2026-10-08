@@ -12,11 +12,17 @@ export function useUser() {
     const supabase = createClient();
 
     const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-      setLoading(false);
+      try {
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+        setUser(authUser ?? null);
+      } catch (err) {
+        console.warn("Could not fetch user session from Supabase:", err);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
 
     getUser();

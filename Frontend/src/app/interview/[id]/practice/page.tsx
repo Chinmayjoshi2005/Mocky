@@ -114,7 +114,7 @@ export default function PracticePage() {
     } catch (err) {
       // Preserve the original return-URL redirect behaviour for the practice flow.
       if (err instanceof Error && err.message.includes("session has expired")) {
-        router.push(`/auth/login?returnUrl=/interview/${interviewId}/practice`);
+        router.push(`/auth/login?redirect=${encodeURIComponent(`/interview/${interviewId}/practice`)}`);
       }
       throw err;
     }

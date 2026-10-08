@@ -15,10 +15,23 @@ import { Suspense } from "react";
 function SignUpContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const requestedRedirect = searchParams.get("redirect");
-  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
-    ? requestedRedirect
-    : "/dashboard";
+  const requestedRedirect =
+    searchParams.get("redirect") ||
+    searchParams.get("returnUrl") ||
+    searchParams.get("next");
+
+  const isInternal = Boolean(requestedRedirect && requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//"));
+  const isAuthRoute = Boolean(
+    requestedRedirect &&
+    (requestedRedirect.startsWith("/auth/login") ||
+      requestedRedirect.startsWith("/auth/signup") ||
+      requestedRedirect === "/login" ||
+      requestedRedirect === "/signup" ||
+      requestedRedirect === "/register")
+  );
+  const redirectTo = isInternal && !isAuthRoute && requestedRedirect ? requestedRedirect : "/dashboard";
+
+  const callbackError = searchParams.get("error");
   const { signUp, loading, error, clearError } = useAuth();
 
   const [formData, setFormData] = useState<AuthFormData>({
@@ -30,67 +43,78 @@ function SignUpContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Partial<AuthFormData>>({});
 
-  const validateField = (name: string, value: string) => {
-    let error = "";
+  const validateField = (name: string, value: string, currentData = formData) => {
+    let err = "";
     switch (name) {
       case "email":
-        if (!value) error = "Email is required";
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Enter a valid email address";
+        if (!value) err = "Email is required";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) err = "Enter a valid email address";
         break;
       case "password":
-        if (!value) error = "Password is required";
-        else if (value.length < 8) error = "Password must be at least 8 characters";
-        else if (!/[A-Z]/.test(value)) error = "Password must contain at least one uppercase letter";
-        else if (!/[a-z]/.test(value)) error = "Password must contain at least one lowercase letter";
-        else if (!/[0-9]/.test(value)) error = "Password must contain at least one number";
+        if (!value) err = "Password is required";
+        else if (value.length < 8) err = "Password must be at least 8 characters";
+        else if (!/[A-Z]/.test(value)) err = "Password must contain at least one uppercase letter";
+        else if (!/[a-z]/.test(value)) err = "Password must contain at least one lowercase letter";
+        else if (!/[0-9]/.test(value)) err = "Password must contain at least one number";
         break;
       case "confirmPassword":
-        if (!value) error = "Please confirm your password";
-        else if (value !== formData.password) error = "Passwords do not match";
+        if (!value) err = "Please confirm your password";
+        else if (value !== currentData.password) err = "Passwords do not match";
         break;
     }
-    return error;
+    return err;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    const error = validateField(name, value);
-    setFieldErrors((prev) => ({ ...prev, [name]: error }));
+    const updated = { ...formData, [name]: value };
+    setFormData(updated);
+
+    const errorMsg = validateField(name, value, updated);
+    setFieldErrors((prev) => {
+      const nextErrors = { ...prev, [name]: errorMsg };
+      if (name === "password" && updated.confirmPassword) {
+        nextErrors.confirmPassword =
+          updated.confirmPassword !== value ? "Passwords do not match" : "";
+      }
+      return nextErrors;
+    });
     clearError();
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const error = validateField(name, value);
-    setFieldErrors((prev) => ({ ...prev, [name]: error }));
+    const errorMsg = validateField(name, value, formData);
+    setFieldErrors((prev) => ({ ...prev, [name]: errorMsg }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
 
-    let hasErrors = false;
-    const newFieldErrors: Partial<AuthFormData> = {};
+    const emailErr = validateField("email", formData.email, formData);
+    const passErr = validateField("password", formData.password, formData);
+    const confirmErr = validateField("confirmPassword", formData.confirmPassword || "", formData);
 
-    (Object.keys(formData) as Array<keyof AuthFormData>).forEach((key) => {
-      const error = validateField(key, formData[key] as string);
-      if (error) {
-        newFieldErrors[key] = error;
-        hasErrors = true;
-      }
-    });
+    const newFieldErrors: Partial<AuthFormData> = {
+      email: emailErr,
+      password: passErr,
+      confirmPassword: confirmErr,
+    };
 
     setFieldErrors(newFieldErrors);
-    if (hasErrors) return;
+    if (emailErr || passErr || confirmErr) return;
 
     const result = await signUp({ email: formData.email, password: formData.password });
 
     if (result.success) {
       if (result.requiresEmailConfirmation) {
-        router.push(`/auth/verify-email?email=${encodeURIComponent(formData.email)}&redirect=${encodeURIComponent(redirectTo ?? "/dashboard")}`);
+        router.push(
+          `/auth/verify-email?email=${encodeURIComponent(formData.email)}&redirect=${encodeURIComponent(redirectTo)}`
+        );
       } else {
-        router.push(redirectTo ?? "/dashboard");
+        router.push(redirectTo);
+        router.refresh();
       }
     }
   };
@@ -108,13 +132,23 @@ function SignUpContent() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          {(error || fieldErrors.email) && (
+          {(error || callbackError) && (
             <div
-              className="animate-fade-in p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm"
+              className="animate-fade-in p-3 rounded-md bg-red-50 border border-red-200 text-red-700 text-sm space-y-1.5"
               role="alert"
               aria-live="polite"
             >
-              {error?.message || fieldErrors.email}
+              <div>{error?.message || callbackError}</div>
+              {error?.message?.toLowerCase().includes("already exists") && (
+                <div>
+                  <Link
+                    href={`/auth/login?redirect=${encodeURIComponent(redirectTo)}`}
+                    className="font-semibold underline hover:text-red-900"
+                  >
+                    Click here to sign in &rarr;
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
@@ -186,14 +220,14 @@ function SignUpContent() {
           />
 
           <Button type="submit" className="w-full" size="lg" loading={loading}>
-            {loading ? <Loader2 className="h-4 w-4" /> : "Create account"}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create account"}
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex flex-col items-center gap-3 pt-4">
         <p className="text-sm text-navy-500">
           Already have an account?{" "}
-          <Link href={`/auth/login?redirect=${encodeURIComponent(redirectTo ?? "/dashboard")}`} className="text-electric-blue hover:underline font-medium">
+          <Link href={`/auth/login?redirect=${encodeURIComponent(redirectTo)}`} className="text-electric-blue hover:underline font-medium">
             Sign in
           </Link>
         </p>

@@ -47,7 +47,7 @@ export default function InterviewsListPage() {
         const token = sessionData.session?.access_token;
 
         if (!token) {
-          router.push("/auth/login?returnUrl=/interview");
+          router.push("/auth/login?redirect=/interview");
           return;
         }
 
@@ -162,7 +162,7 @@ export default function InterviewsListPage() {
                       </span>
                       <span className="text-xs text-navy-400 flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {new Date(session.created_at).toLocaleDateString(undefined, {
+                        {new Date(session.created_at).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
                           year: "numeric",

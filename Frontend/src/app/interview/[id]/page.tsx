@@ -119,7 +119,7 @@ export default function InterviewDetailPage() {
         const token = sessionData.session?.access_token;
 
         if (!token) {
-          router.push("/auth/login?returnUrl=/interview/" + interviewId);
+          router.push(`/auth/login?redirect=${encodeURIComponent(`/interview/${interviewId}`)}`);
           return;
         }
 

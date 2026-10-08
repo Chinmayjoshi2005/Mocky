@@ -8,14 +8,26 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { useAuth } from "@/hooks";
 import { Suspense } from "react";
+import { Input } from "@/components/ui/input";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "";
-  const requestedRedirect = searchParams.get("redirect");
-  const redirectTo = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
-    ? requestedRedirect
-    : "/dashboard";
+  const initialEmail = searchParams.get("email") || "";
+  const [email, setEmail] = useState(initialEmail);
+  const requestedRedirect =
+    searchParams.get("redirect") ||
+    searchParams.get("returnUrl") ||
+    searchParams.get("next");
+  const isInternal = Boolean(requestedRedirect && requestedRedirect.startsWith("/") && !requestedRedirect.startsWith("//"));
+  const isAuthRoute = Boolean(
+    requestedRedirect &&
+    (requestedRedirect.startsWith("/auth/login") ||
+      requestedRedirect.startsWith("/auth/signup") ||
+      requestedRedirect === "/login" ||
+      requestedRedirect === "/signup" ||
+      requestedRedirect === "/register")
+  );
+  const redirectTo = isInternal && !isAuthRoute && requestedRedirect ? requestedRedirect : "/dashboard";
 
   const { resendVerificationEmail, loading, error, clearError } = useAuth();
   const [resendStatus, setResendStatus] = useState<string | null>(null);
@@ -79,21 +91,31 @@ function VerifyEmailContent() {
           </ul>
         </div>
 
-        {email && (
-          <Button
-            variant="outline"
-            onClick={handleResend}
+        {!initialEmail && (
+          <Input
+            label="Your email address"
+            name="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <RefreshCw className="h-4 w-4" />
-            )}
-            Resend verification email
-          </Button>
+          />
         )}
+
+        <Button
+          variant="outline"
+          onClick={handleResend}
+          disabled={loading || !email}
+          className="w-full flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          Resend verification email
+        </Button>
       </CardContent>
 
       <CardFooter className="flex flex-col items-center gap-3 pt-2">

@@ -123,8 +123,11 @@ export function DashboardContent({ user }: DashboardContentProps) {
   }, [handleKeyDown]);
 
   const handleSignOut = async () => {
-    const result = await signOut();
-    if (result.success) {
+    try {
+      await signOut();
+    } catch (err) {
+      console.error("Sign out error:", err);
+    } finally {
       router.push("/auth/login");
       router.refresh();
     }
@@ -243,7 +246,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
   };
 
   return (
-    <div className="portrait-frame py-6 sm:py-8 animate-slide-up">
+    <div className="portrait-frame py-6 sm:py-8">
       <div className="clay-header mb-8 flex flex-col gap-5 rounded-[26px] border border-white/80 bg-blue-100/70 p-5 shadow-[12px_12px_28px_rgba(136,148,174,0.34),-10px_-10px_24px_rgba(255,255,255,0.9)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div>
           <Logo size="lg" withText />
@@ -377,11 +380,11 @@ export function DashboardContent({ user }: DashboardContentProps) {
             <div className="grid gap-4 sm:grid-cols-3">
               <Link
                 href="/intake?step=1"
-                className="clay-tile clay-tile-blue group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-all hover:-translate-y-1 hover:border-white hover:bg-blue-100/70 hover:shadow-[10px_10px_20px_rgba(136,148,174,0.34),-7px_-7px_15px_rgba(255,255,255,0.95)]"
+                className="clay-tile clay-tile-blue group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-colors hover:border-white hover:bg-blue-100/70"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-electric-blue group-hover:scale-105 transition-transform">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-electric-blue">
                       <FileText className="h-4 w-4" />
                     </div>
                     <span className="text-[11px] font-semibold text-navy-500 bg-navy-100 px-2 py-0.5 rounded">
@@ -395,7 +398,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
                     Upload your PDF resume to anchor questions in your real experience.
                   </p>
                 </div>
-                <div className="mt-3 flex items-center text-xs font-semibold text-electric-blue group-hover:translate-x-0.5 transition-transform">
+                <div className="mt-3 flex items-center text-xs font-semibold text-electric-blue">
                   <span>Configure</span>
                   <ArrowRight className="h-3.5 w-3.5 ml-1" />
                 </div>
@@ -403,11 +406,11 @@ export function DashboardContent({ user }: DashboardContentProps) {
 
               <Link
                 href="/intake?step=2"
-                className="clay-tile clay-tile-mint group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-all hover:-translate-y-1 hover:border-white hover:bg-emerald-100/70 hover:shadow-[10px_10px_20px_rgba(136,148,174,0.34),-7px_-7px_15px_rgba(255,255,255,0.95)]"
+                className="clay-tile clay-tile-mint group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-white/70 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-colors hover:border-white hover:bg-emerald-100/70"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-electric-blue group-hover:scale-105 transition-transform">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-50 text-electric-blue">
                       <Briefcase className="h-4 w-4" />
                     </div>
                     <span className="text-[11px] font-semibold text-navy-500 bg-navy-100 px-2 py-0.5 rounded">
@@ -421,7 +424,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
                     Set role requirements, seniority, and competencies.
                   </p>
                 </div>
-                <div className="mt-3 flex items-center text-xs font-semibold text-electric-blue group-hover:translate-x-0.5 transition-transform">
+                <div className="mt-3 flex items-center text-xs font-semibold text-electric-blue">
                   <span>Configure</span>
                   <ArrowRight className="h-3.5 w-3.5 ml-1" />
                 </div>
@@ -429,11 +432,11 @@ export function DashboardContent({ user }: DashboardContentProps) {
 
               <Link
                 href="/intake"
-                className="clay-tile clay-tile-amber group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-amber-100/80 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-all hover:-translate-y-1 hover:border-white hover:bg-amber-200/80 hover:shadow-[10px_10px_20px_rgba(136,148,174,0.34),-7px_-7px_15px_rgba(255,255,255,0.95)]"
+                className="clay-tile clay-tile-amber group flex cursor-pointer flex-col justify-between rounded-2xl border border-white/80 bg-amber-100/80 p-4 shadow-[7px_7px_16px_rgba(136,148,174,0.3),-5px_-5px_12px_rgba(255,255,255,0.9)] transition-colors hover:border-white hover:bg-amber-200/80"
               >
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-electric-blue text-white group-hover:scale-105 transition-transform">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-electric-blue text-white">
                       <PlayCircle className="h-4 w-4" />
                     </div>
                     <span className="text-[11px] font-semibold text-electric-blue bg-white border border-blue-200 px-2 py-0.5 rounded">
@@ -447,7 +450,7 @@ export function DashboardContent({ user }: DashboardContentProps) {
                     Set up your complete interview context in a few guided steps.
                   </p>
                 </div>
-                <div className="mt-3 flex items-center text-xs font-semibold text-electric-blue group-hover:translate-x-0.5 transition-transform">
+                <div className="mt-3 flex items-center text-xs font-semibold text-electric-blue">
                   <span>Open Intake</span>
                   <ArrowRight className="h-3.5 w-3.5 ml-1" />
                 </div>

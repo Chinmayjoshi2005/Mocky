@@ -7,14 +7,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * No backend call, no cost, works offline in Chromium/Safari/Firefox.
  */
 export function useSpeech() {
-  const [supported, setSupported] = useState(false);
+  const [supported] = useState(() => typeof window !== "undefined" && "speechSynthesis" in window);
   const [speaking, setSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setSupported("speechSynthesis" in window);
-  }, []);
 
   const stop = useCallback(() => {
     if (typeof window === "undefined") return;
