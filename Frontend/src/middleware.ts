@@ -64,7 +64,8 @@ export async function middleware(request: NextRequest) {
     const isProtected =
       pathname.startsWith("/dashboard") ||
       pathname.startsWith("/intake") ||
-      pathname.startsWith("/interview");
+      pathname.startsWith("/interview") ||
+      pathname.startsWith("/progress");
 
     // Guest-only auth pages (redirect logged-in users away)
     const isGuestOnlyAuthPage =

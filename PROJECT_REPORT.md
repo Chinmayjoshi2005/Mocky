@@ -124,10 +124,10 @@ supports several application activities:
 8. The candidate reviews the overall practice score and improvement guidance.
 
 The project is suitable for individual self-practice because each user's
-resume, job descriptions, interview sessions, and answers are associated with
-that user's authenticated account. It also provides a foundation for future
-extensions such as richer practice history and additional interview modes,
-although audio and video practice are not currently implemented.
+resume, job descriptions, interview sessions, answers, and improvement goals
+are associated with that user's authenticated account. Recorded voice answers
+can be transcribed for text evaluation. Live spoken interviews and video
+practice are not currently implemented.
 
 ## 6. Conclusion
 
@@ -138,10 +138,11 @@ the FastAPI backend coordinates validation, ownership checks, AI services, and
 Supabase operations.
 
 The current implementation covers the main authenticated intake, interview
-question, and text-practice workflows. Its security model separates public
-client configuration from backend secrets and applies ownership checks to user
-data. Future development can build on this foundation with interview history,
-analytics, and additional practice formats.
+question, text-practice, practice-history, and personal-goal workflows. Its
+security model separates public client configuration from backend secrets and
+applies ownership checks to user data. Career intelligence, an AI copilot,
+live spoken interviews, richer analytics, and video practice remain future
+work.
 
 ## 7. References
 
@@ -305,8 +306,9 @@ exposed.
 
 ## Current Limitations
 
-- Audio and video interview modes are not implemented.
-- Advanced history and analytics are planned future work.
+- Live spoken interviews and video interview modes are not implemented.
+- Practice history and basic progress summaries are available; advanced
+  analytics and career intelligence are planned future work.
 - The dark theme currently uses a client-side preference and may briefly show
   the bright theme before hydration on a fresh load.
 - Dependency advisories should continue to be monitored as upstream fixes are

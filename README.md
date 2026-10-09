@@ -20,14 +20,16 @@ The project is a small full-stack monorepo:
 - AI-generated interview questions grounded in the candidate and role
 - Question review, editing, selection, ordering, and regeneration
 - Text practice sessions with per-answer AI evaluation
+- Recorded voice answers with speech-to-text transcription
 - Overall practice scoring and feedback review
+- Practice history, progress summaries, and personal improvement goals
 - Supabase Row Level Security migrations and ownership checks
 
 ## Before You Start
 
 Install:
 
-- Node.js 18 or newer
+- Node.js 20.9 or newer (required by Next.js 16)
 - Python 3.11 or newer
 - A Supabase project
 - A Groq API key for AI analysis and question generation
@@ -137,8 +139,13 @@ When deploying:
 ## Project Status
 
 Mocky is an active project. The core authenticated intake, question generation,
-customisation, and text practice flows are implemented. Audio/video practice,
-advanced history, and richer analytics are planned for later iterations.
+customisation, text practice, voice-to-text answer input, practice history, and
+personal goals are implemented. Live spoken interviews, video practice, career
+intelligence, the general AI copilot, and richer analytics remain planned.
+
+Before using improvement goals on an existing Supabase project, apply the
+`20261008160000_feature5_progress_goals.sql` migration in
+`supabase/migrations/`.
 
 ## Contributing
 
